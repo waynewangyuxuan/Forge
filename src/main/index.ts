@@ -1,3 +1,8 @@
+// Fix PATH for CLI tools (gh, git) when app is launched from Finder/Dock
+// Must be called before any child_process operations
+import fixPath from 'fix-path'
+fixPath()
+
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { initializeDatabase, closeDatabase } from './infrastructure/database'
