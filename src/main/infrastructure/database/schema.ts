@@ -6,21 +6,35 @@
 /**
  * Schema version for migrations
  */
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 /**
  * Projects table - stores project metadata
+ * v2: Added github_repo and github_owner columns for GitHub-first design
  */
 export const CREATE_PROJECTS_TABLE = `
 CREATE TABLE IF NOT EXISTS projects (
   id            TEXT PRIMARY KEY,
   name          TEXT NOT NULL,
   path          TEXT NOT NULL UNIQUE,
+  github_repo   TEXT,
+  github_owner  TEXT,
   created_at    TEXT NOT NULL,
   archived_at   TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_projects_archived ON projects(archived_at);
+CREATE INDEX IF NOT EXISTS idx_projects_github ON projects(github_owner, github_repo);
+`
+
+/**
+ * Migration SQL from schema version 1 to 2
+ * Adds GitHub columns to projects table
+ */
+export const MIGRATION_V1_TO_V2 = `
+ALTER TABLE projects ADD COLUMN github_repo TEXT;
+ALTER TABLE projects ADD COLUMN github_owner TEXT;
+CREATE INDEX IF NOT EXISTS idx_projects_github ON projects(github_owner, github_repo);
 `
 
 /**

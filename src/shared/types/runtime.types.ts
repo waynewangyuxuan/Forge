@@ -84,6 +84,7 @@ export interface RuntimeConfigInput {
  */
 export interface Settings {
   projectsLocation: string // Default location for new projects
+  cloneRoot: string // GitHub clone root directory
   initGit: boolean
   autoCommitOnMilestone: boolean
   autoPush: boolean

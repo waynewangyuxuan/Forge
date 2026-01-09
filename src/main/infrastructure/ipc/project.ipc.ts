@@ -6,7 +6,9 @@
 import { ipcMain } from 'electron'
 import { SQLiteProjectRepository } from '../repositories/sqlite-project.repo'
 import { SQLiteVersionRepository } from '../repositories/sqlite-version.repo'
+import { SQLiteSettingsRepository } from '../repositories/sqlite-settings.repo'
 import { getFileSystemAdapter } from '../adapters/file-system.adapter'
+import { getGitHubAdapter } from '../adapters/github.adapter'
 import { serializeError } from '@shared/errors'
 import {
   createProject,
@@ -26,7 +28,9 @@ import type { CreateProjectInput } from '@shared/types/project.types'
 // Initialize dependencies
 const projectRepo = new SQLiteProjectRepository()
 const versionRepo = new SQLiteVersionRepository()
+const settingsRepo = new SQLiteSettingsRepository()
 const fs = getFileSystemAdapter()
+const github = getGitHubAdapter()
 
 /**
  * Register all project IPC handlers
@@ -53,12 +57,22 @@ export function registerProjectHandlers(): void {
     }
   })
 
-  // project:create - Create a new project
+  // project:create - Create a new project (GitHub-first workflow)
   ipcMain.handle('project:create', async (_event, input: CreateProjectInput) => {
     try {
       const result = await createProject(
-        { name: input.name, path: input.path },
-        { projectRepo, versionRepo, fs }
+        {
+          name: input.name,
+          description: input.description,
+          private: input.private,
+        },
+        {
+          projectRepo,
+          versionRepo,
+          fs,
+          github,
+          getSettings: () => settingsRepo.getAll(),
+        }
       )
       // Return just the project (version is created automatically)
       return result.project

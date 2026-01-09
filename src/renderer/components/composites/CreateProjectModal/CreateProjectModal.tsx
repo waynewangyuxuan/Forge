@@ -1,6 +1,6 @@
 /**
  * CreateProjectModal
- * Modal form for creating a new project
+ * Modal form for creating a new project (GitHub-first)
  */
 
 import React, { useState } from 'react'
@@ -19,42 +19,28 @@ export const CreateProjectModal: React.FC = () => {
   const createProject = useServerStore((s) => s.createProject)
 
   const [name, setName] = useState('')
-  const [path, setPath] = useState('')
+  const [description, setDescription] = useState('')
+  const [isPrivate, setIsPrivate] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<{ name?: string; path?: string }>({})
+  const [errors, setErrors] = useState<{ name?: string }>({})
 
   const handleClose = () => {
     // Reset form
     setName('')
-    setPath('')
+    setDescription('')
+    setIsPrivate(false)
     setErrors({})
     setLoading(false)
     closeModal('createProject')
   }
 
-  const handleBrowse = async () => {
-    try {
-      const selectedPath = await window.api.invoke('system:selectFolder', {
-        title: 'Select Project Location',
-      })
-      if (selectedPath) {
-        setPath(selectedPath as string)
-        setErrors((prev) => ({ ...prev, path: undefined }))
-      }
-    } catch (error) {
-      console.error('Failed to select folder:', error)
-    }
-  }
-
   const validate = (): boolean => {
-    const newErrors: { name?: string; path?: string } = {}
+    const newErrors: { name?: string } = {}
 
     if (!name.trim()) {
       newErrors.name = 'Project name is required'
-    }
-
-    if (!path.trim()) {
-      newErrors.path = 'Project path is required'
+    } else if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(name.trim())) {
+      newErrors.name = 'Name must start with a letter/number and contain only letters, numbers, hyphens, underscores'
     }
 
     setErrors(newErrors)
@@ -70,7 +56,8 @@ export const CreateProjectModal: React.FC = () => {
     try {
       const project = await createProject({
         name: name.trim(),
-        path: path.trim(),
+        description: description.trim() || undefined,
+        private: isPrivate,
       })
 
       showToast({
@@ -87,15 +74,20 @@ export const CreateProjectModal: React.FC = () => {
 
       // Handle specific error types
       const err = error as { code?: string; message?: string }
-      if (err.code === 'DUPLICATE') {
-        setErrors({ path: 'A project with this path already exists' })
+      if (err.code === 'GITHUB_NOT_AUTHENTICATED') {
+        showToast({
+          type: 'error',
+          message: 'Please connect GitHub in Settings first',
+        })
+      } else if (err.code === 'GITHUB_CLI_NOT_FOUND') {
+        showToast({
+          type: 'error',
+          message: 'GitHub CLI not found. Please install gh from https://cli.github.com',
+        })
+      } else if (err.code === 'GITHUB_REPO_EXISTS') {
+        setErrors({ name: 'A repository with this name already exists' })
       } else if (err.code === 'VALIDATION_ERROR') {
-        // Check which field the error is about
-        if (err.message?.includes('path')) {
-          setErrors({ path: err.message })
-        } else {
-          setErrors({ name: err.message })
-        }
+        setErrors({ name: err.message })
       } else {
         showToast({
           type: 'error',
@@ -129,46 +121,46 @@ export const CreateProjectModal: React.FC = () => {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Project Name"
-          value={name}
-          onChange={setName}
-          placeholder="My Awesome Project"
-          error={errors.name}
-          disabled={loading}
-          autoFocus
-        />
+        <div>
+          <Input
+            label="Project Name"
+            value={name}
+            onChange={setName}
+            placeholder="my-awesome-project"
+            error={errors.name}
+            disabled={loading}
+            autoFocus
+          />
+          <p className="mt-1 text-xs text-stone-500">Also used as GitHub repository name</p>
+        </div>
 
         <div>
-          <label className="block mb-1.5 text-sm font-medium text-stone-700">
-            Project Location
+          <Input
+            label="Description (optional)"
+            value={description}
+            onChange={setDescription}
+            placeholder="A brief description of your project"
+            disabled={loading}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="private-repo"
+            checked={isPrivate}
+            onChange={(e) => setIsPrivate(e.target.checked)}
+            disabled={loading}
+            className="h-4 w-4 rounded border-stone-300 text-amber-600 focus:ring-amber-500"
+          />
+          <label htmlFor="private-repo" className="text-sm text-stone-700">
+            Private repository
           </label>
-          <div className="flex gap-2">
-            <Input
-              value={path}
-              onChange={setPath}
-              placeholder="/path/to/project"
-              error={errors.path}
-              disabled={loading}
-              className="flex-1"
-            />
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleBrowse}
-              disabled={loading}
-            >
-              Browse
-            </Button>
-          </div>
-          {errors.path && (
-            <p className="mt-1.5 text-xs text-red-600">{errors.path}</p>
-          )}
         </div>
 
         <p className="text-xs text-stone-500 mt-2">
-          A new directory structure will be created with META/CORE/ folders
-          containing template files.
+          A new GitHub repository will be created and cloned to your projects folder.
+          The META/CORE/ directory structure will be set up automatically.
         </p>
       </form>
     </Modal>

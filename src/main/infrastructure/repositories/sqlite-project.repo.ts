@@ -15,6 +15,8 @@ interface ProjectRow {
   id: string
   name: string
   path: string
+  github_repo: string | null
+  github_owner: string | null
   created_at: string
   archived_at: string | null
 }
@@ -27,6 +29,8 @@ function rowToProject(row: ProjectRow): Project {
     id: row.id,
     name: row.name,
     path: row.path,
+    githubRepo: row.github_repo,
+    githubOwner: row.github_owner,
     createdAt: row.created_at,
     archivedAt: row.archived_at,
   }
@@ -79,15 +83,17 @@ export class SQLiteProjectRepository
     const createdAt = nowISO()
 
     this.run(
-      `INSERT INTO projects (id, name, path, created_at, archived_at)
-       VALUES (?, ?, ?, ?, NULL)`,
-      [id, input.name, input.path, createdAt]
+      `INSERT INTO projects (id, name, path, github_repo, github_owner, created_at, archived_at)
+       VALUES (?, ?, ?, ?, ?, ?, NULL)`,
+      [id, input.name, input.path, input.githubRepo, input.githubOwner, createdAt]
     )
 
     return {
       id,
       name: input.name,
       path: input.path,
+      githubRepo: input.githubRepo,
+      githubOwner: input.githubOwner,
       createdAt,
       archivedAt: null,
     }
@@ -119,6 +125,16 @@ export class SQLiteProjectRepository
       }
       updates.push('path = ?')
       params.push(data.path)
+    }
+
+    if (data.githubRepo !== undefined) {
+      updates.push('github_repo = ?')
+      params.push(data.githubRepo)
+    }
+
+    if (data.githubOwner !== undefined) {
+      updates.push('github_owner = ?')
+      params.push(data.githubOwner)
     }
 
     if (data.archivedAt !== undefined) {

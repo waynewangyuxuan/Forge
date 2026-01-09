@@ -27,7 +27,7 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 | [M0.md](M0.md) | ✅ complete | 项目脚手架 - Electron + React + TypeScript 环境搭建 |
 | [M1.md](M1.md) | ✅ complete | 核心基础设施 - SQLite、IPC、Config Loader |
 | [M2.md](M2.md) | ✅ complete | 项目管理 - Project/Version CRUD |
-| [M2.5.md](M2.5.md) | pending | GitHub 集成 - GitHub-first 项目创建 |
+| [M2.5.md](M2.5.md) | ✅ complete | GitHub 集成 - GitHub-first 项目创建 |
 | [M3.md](M3.md) | pending | Spec 编辑 - Markdown 编辑器 |
 | [M4.md](M4.md) | pending | Scaffold 生成 - AI 生成 TODO.md |
 | [M5.md](M5.md) | pending | Review 流程 - TODO 审核与 Approve |
@@ -43,7 +43,7 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 | M0 | ✅ complete | 2025-01-09 | 2025-01-09 |
 | M1 | ✅ complete | 2025-01-09 | 2025-01-09 |
 | M2 | ✅ complete | 2025-01-09 | 2025-01-09 |
-| M2.5 | pending | - | - |
+| M2.5 | ✅ complete | 2026-01-09 | 2026-01-09 |
 | M3 | pending | - | - |
 | M4 | pending | - | - |
 | M5 | pending | - | - |

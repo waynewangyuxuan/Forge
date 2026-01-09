@@ -135,21 +135,38 @@ function getSchemaVersion(database: Database.Database): number {
 
 /**
  * Run database migrations
- * Currently a placeholder - migrations will be added as needed
+ * Applies migrations incrementally from current version to target version
  */
 function runMigrations(
   database: Database.Database,
   fromVersion: number,
   toVersion: number
 ): void {
-  // Migrations will be implemented here as the schema evolves
-  // For now, just log the migration intent
   console.log(`Migrating database from version ${fromVersion} to ${toVersion}`)
 
-  // After migrations are applied, update the schema version
-  database
-    .prepare('INSERT INTO schema_version (version, applied_at) VALUES (?, ?)')
-    .run(toVersion, new Date().toISOString())
+  // Run migrations one version at a time
+  for (let v = fromVersion + 1; v <= toVersion; v++) {
+    console.log(`Applying migration to version ${v}`)
+
+    switch (v) {
+      case 2:
+        // v1 -> v2: Add GitHub columns to projects table
+        // SQLite doesn't support multiple statements in one exec when using ALTER TABLE
+        // So we run them separately
+        database.exec('ALTER TABLE projects ADD COLUMN github_repo TEXT')
+        database.exec('ALTER TABLE projects ADD COLUMN github_owner TEXT')
+        database.exec('CREATE INDEX IF NOT EXISTS idx_projects_github ON projects(github_owner, github_repo)')
+        break
+      // Add future migrations here as cases
+      default:
+        console.log(`No migration defined for version ${v}`)
+    }
+
+    // Record this migration
+    database
+      .prepare('INSERT INTO schema_version (version, applied_at) VALUES (?, ?)')
+      .run(v, new Date().toISOString())
+  }
 }
 
 /**
