@@ -7,6 +7,7 @@ import { createHashRouter, Navigate } from 'react-router-dom'
 import { RootLayout } from './RootLayout'
 import { ProjectListPage } from './pages/ProjectListPage'
 import { ProjectLayout } from './pages/ProjectLayout'
+import { OverviewPage } from './pages/OverviewPage'
 import { SettingsPage } from './pages/SettingsPage'
 
 // Placeholder page for routes not yet implemented
@@ -42,7 +43,7 @@ export const router = createHashRouter([
           // Overview (default)
           {
             index: true,
-            element: <PlaceholderPage title="Overview" />,
+            element: <OverviewPage />,
           },
           // Development flow
           {
