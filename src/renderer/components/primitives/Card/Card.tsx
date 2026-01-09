@@ -33,8 +33,8 @@ export const Card: React.FC<CardProps> = ({
   onClick,
   className = '',
 }) => {
-  const baseStyles = 'bg-white border border-stone-200 rounded-2xl overflow-hidden'
-  const hoverStyles = hover ? 'hover:border-stone-300 hover:shadow-md transition-all duration-150 cursor-pointer' : ''
+  const baseStyles = 'bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden shadow-sm'
+  const hoverStyles = hover ? 'hover:border-[#d4d4d4] hover:shadow-md transition-all duration-150 cursor-pointer' : ''
   const clickableStyles = onClick ? 'cursor-pointer' : ''
 
   return (
@@ -46,11 +46,11 @@ export const Card: React.FC<CardProps> = ({
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
     >
       {header && (
-        <div className="flex items-center justify-between px-4 py-3 bg-stone-50 border-b border-stone-200">
+        <div className="flex items-center justify-between px-4 py-3 bg-[#fafafa] border-b border-[#f0f0f0]">
           <div>
-            <h3 className="text-sm font-semibold text-stone-900">{header.title}</h3>
+            <h3 className="text-sm font-semibold text-[#1a1a1a]">{header.title}</h3>
             {header.subtitle && (
-              <p className="text-xs text-stone-500 mt-0.5">{header.subtitle}</p>
+              <p className="text-xs text-[#737373] mt-0.5">{header.subtitle}</p>
             )}
           </div>
           {header.actions && <div className="flex items-center gap-2">{header.actions}</div>}

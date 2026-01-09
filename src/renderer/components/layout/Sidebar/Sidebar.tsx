@@ -88,13 +88,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   if (collapsed) {
     // Collapsed sidebar - just icons
     return (
-      <aside className="w-14 bg-white border-r border-stone-200 flex flex-col">
+      <aside className="w-14 bg-white border-r border-[#e5e5e5] flex flex-col">
         <button
           onClick={toggle}
-          className="p-4 hover:bg-stone-50 transition-colors"
+          className="p-4 hover:bg-[#f5f5f4] transition-colors"
           aria-label="Expand sidebar"
         >
-          <svg className="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[#737373]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
@@ -103,17 +103,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }
 
   return (
-    <aside className="w-56 bg-white border-r border-stone-200 flex flex-col">
+    <aside className="w-56 bg-white border-r border-[#e5e5e5] flex flex-col">
       {/* Project Header */}
-      <div className="p-4 border-b border-stone-200">
+      <div className="p-4 border-b border-[#e5e5e5]">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="font-semibold text-stone-900 truncate">{project.name}</h2>
+          <h2 className="font-semibold text-[#1a1a1a] truncate">{project.name}</h2>
           <button
             onClick={toggle}
-            className="p-1 rounded hover:bg-stone-100 transition-colors"
+            className="p-1 rounded hover:bg-[#f5f5f4] transition-colors"
             aria-label="Collapse sidebar"
           >
-            <svg className="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-[#a3a3a3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
           </button>
@@ -124,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <select
             value={currentVersionId || ''}
             onChange={(e) => onVersionChange(e.target.value)}
-            className="w-full appearance-none bg-stone-50 border border-stone-200 rounded-lg px-3 py-1.5 text-sm text-stone-700 pr-8 focus:outline-none focus:ring-2 focus:ring-amber-200"
+            className="w-full appearance-none bg-[#f5f5f4] border border-[#e5e5e5] rounded-lg px-3 py-1.5 text-sm text-[#525252] pr-8 focus:outline-none focus:ring-2 focus:ring-amber-200"
           >
             {versions.map((version) => (
               <option key={version.id} value={version.id}>
@@ -132,7 +132,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </option>
             ))}
           </select>
-          <icons.chevron className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+          <icons.chevron className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a3a3a3] pointer-events-none" />
         </div>
 
         {/* Current Status */}
@@ -152,7 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <nav className="flex-1 overflow-y-auto py-2">
         {/* Development Section */}
         <div className="px-3 py-2">
-          <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">
+          <span className="text-xs font-medium text-[#a3a3a3] uppercase tracking-[0.2em]">
             Development
           </span>
         </div>
@@ -162,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Runtime Section */}
         <div className="px-3 py-2 mt-4">
-          <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">
+          <span className="text-xs font-medium text-[#a3a3a3] uppercase tracking-[0.2em]">
             Runtime
           </span>
         </div>
@@ -172,10 +172,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Back to Projects */}
-      <div className="p-3 border-t border-stone-200">
+      <div className="p-3 border-t border-[#e5e5e5]">
         <button
           onClick={() => navigate('/projects')}
-          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-stone-600 rounded-lg hover:bg-stone-50 transition-colors"
+          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[#525252] rounded-lg hover:bg-[#f5f5f4] transition-colors"
         >
           <icons.back className="w-4 h-4" />
           <span>Back to Projects</span>
@@ -203,7 +203,7 @@ const NavItem: React.FC<{
         `flex items-center gap-3 mx-2 px-3 py-2 text-sm rounded-lg transition-colors ${
           isActive
             ? 'bg-amber-50 text-amber-700 font-medium'
-            : 'text-stone-600 hover:bg-stone-50'
+            : 'text-[#525252] hover:bg-[#f5f5f4]'
         }`
       }
     >

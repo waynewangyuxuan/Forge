@@ -86,13 +86,13 @@ export const Modal: React.FC<ModalProps> = ({
         className={`relative w-full ${widthStyles[width]} mx-4 bg-white rounded-2xl shadow-xl`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200">
-          <h2 id="modal-title" className="text-lg font-semibold text-stone-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e5e5]">
+          <h2 id="modal-title" className="text-lg font-semibold text-[#1a1a1a]">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+            className="p-1 rounded-lg text-[#a3a3a3] hover:text-[#525252] hover:bg-[#f5f5f4] transition-colors"
             aria-label="Close modal"
           >
             <svg
@@ -116,7 +116,7 @@ export const Modal: React.FC<ModalProps> = ({
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-stone-200 bg-stone-50 rounded-b-2xl">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e5e5e5] bg-[#fafafa] rounded-b-2xl">
             {footer}
           </div>
         )}

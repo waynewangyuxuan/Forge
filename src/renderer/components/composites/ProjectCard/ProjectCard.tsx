@@ -83,10 +83,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-stone-900 truncate">
+            <h3 className="text-base font-medium text-[#1a1a1a] truncate">
               {project.name}
             </h3>
-            <p className="text-xs text-stone-500 truncate mt-0.5">
+            <p className="text-xs text-[#a3a3a3] truncate mt-0.5 font-mono">
               {project.path}
             </p>
           </div>
@@ -101,7 +101,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="grid grid-cols-2 gap-4 mb-4">
           {/* Development Status */}
           <div>
-            <p className="text-xs text-stone-500 mb-1">Development</p>
+            <p className="text-xs text-[#a3a3a3] uppercase tracking-wider mb-1">Development</p>
             <Badge variant={devStatusVariant[devStatus]} size="md">
               {devStatusText[devStatus]}
             </Badge>
@@ -109,7 +109,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
           {/* Runtime Status */}
           <div>
-            <p className="text-xs text-stone-500 mb-1">Runtime</p>
+            <p className="text-xs text-[#a3a3a3] uppercase tracking-wider mb-1">Runtime</p>
             <Badge variant={runtimeStatusVariant[runtimeStatus]} size="md">
               {runtimeStatusText[runtimeStatus]}
             </Badge>
@@ -117,7 +117,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 mt-auto pt-3 border-t border-stone-100">
+        <div className="flex items-center gap-2 mt-auto pt-3 border-t border-[#f0f0f0]">
           <Button
             variant="primary"
             size="sm"

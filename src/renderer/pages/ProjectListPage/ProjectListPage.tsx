@@ -86,7 +86,7 @@ export const ProjectListPage: React.FC = () => {
     <div className="p-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-stone-900">My Projects</h1>
+        <h1 className="text-2xl font-light tracking-tight text-[#1a1a1a]">My Projects</h1>
         <Button variant="primary" onClick={handleNewProject}>
           + New Project
         </Button>
@@ -95,9 +95,9 @@ export const ProjectListPage: React.FC = () => {
       {/* Empty state */}
       {projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-[#f5f5f4] flex items-center justify-center mb-4">
             <svg
-              className="w-8 h-8 text-stone-400"
+              className="w-8 h-8 text-[#a3a3a3]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -110,10 +110,10 @@ export const ProjectListPage: React.FC = () => {
               />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold text-stone-900 mb-2">
+          <h2 className="text-lg font-semibold text-[#1a1a1a] mb-2">
             No projects yet
           </h2>
-          <p className="text-stone-500 mb-6 max-w-sm">
+          <p className="text-[#737373] mb-6 max-w-sm">
             Create your first project to get started. Describe what you want to
             build and let AI generate the code for you.
           </p>

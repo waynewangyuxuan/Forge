@@ -65,8 +65,8 @@ export const OverviewPage: React.FC = () => {
     <div className="p-6 max-w-4xl mx-auto">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-stone-900">{project.name}</h1>
-        <p className="text-sm text-stone-500 mt-1">{project.path}</p>
+        <h1 className="text-2xl font-light tracking-tight text-[#1a1a1a]">{project.name}</h1>
+        <p className="text-sm text-[#a3a3a3] mt-1 font-mono">{project.path}</p>
       </div>
 
       {/* Status Cards Grid */}
@@ -80,8 +80,8 @@ export const OverviewPage: React.FC = () => {
         >
           <div className="space-y-4">
             <div>
-              <p className="text-xs text-stone-500 mb-1">Version</p>
-              <p className="text-sm font-medium text-stone-900">
+              <p className="text-xs text-[#a3a3a3] uppercase tracking-wider mb-1">Version</p>
+              <p className="text-sm font-medium text-[#1a1a1a]">
                 {currentVersion.versionName} ({currentVersion.branchName})
               </p>
             </div>
@@ -110,14 +110,14 @@ export const OverviewPage: React.FC = () => {
         >
           <div className="space-y-4">
             {currentVersion.runtimeStatus === 'not_configured' ? (
-              <p className="text-sm text-stone-500">
+              <p className="text-sm text-[#737373]">
                 Runtime is not configured yet. Complete development first, then configure how your
                 project should run.
               </p>
             ) : (
               <div>
-                <p className="text-xs text-stone-500 mb-1">Trigger Mode</p>
-                <p className="text-sm font-medium text-stone-900">Manual</p>
+                <p className="text-xs text-[#a3a3a3] uppercase tracking-wider mb-1">Trigger Mode</p>
+                <p className="text-sm font-medium text-[#1a1a1a]">Manual</p>
               </div>
             )}
 
@@ -145,7 +145,7 @@ export const OverviewPage: React.FC = () => {
 
       {/* Version History */}
       <Card header={{ title: 'Version History' }}>
-        <div className="divide-y divide-stone-100">
+        <div className="divide-y divide-[#f0f0f0]">
           {versions.map((version) => (
             <div
               key={version.id}
@@ -154,13 +154,13 @@ export const OverviewPage: React.FC = () => {
               }`}
             >
               <div>
-                <p className="text-sm font-medium text-stone-900">
+                <p className="text-sm font-medium text-[#1a1a1a]">
                   {version.versionName}
                   {version.id === currentVersionId && (
                     <span className="ml-2 text-xs text-amber-600">(current)</span>
                   )}
                 </p>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-[#a3a3a3]">
                   Branch: {version.branchName}
                 </p>
               </div>

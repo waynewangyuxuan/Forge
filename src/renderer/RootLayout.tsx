@@ -10,7 +10,7 @@ import { CreateProjectModal } from './components/composites/CreateProjectModal'
 
 export const RootLayout: React.FC = () => {
   return (
-    <div className="flex flex-col h-screen bg-stone-50">
+    <div className="flex flex-col h-screen bg-[#faf9f7]">
       <Header />
       <main className="flex-1 overflow-auto">
         <Outlet />

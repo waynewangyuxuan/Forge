@@ -14,28 +14,26 @@ export const Header: React.FC = () => {
   const isSettingsPage = location.pathname === '/settings'
 
   return (
-    <header className="h-14 border-b border-stone-200 bg-white px-4 flex items-center justify-between flex-shrink-0">
+    <header className="h-14 border-b border-[#e5e5e5] bg-white px-4 flex items-center justify-between flex-shrink-0">
       {/* Logo and Title */}
       <button
         onClick={() => navigate('/projects')}
-        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        className="flex items-center gap-3 hover:opacity-80 transition-opacity"
       >
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/25">
           <svg
             className="w-5 h-5 text-white"
             fill="none"
             stroke="currentColor"
+            strokeWidth={2.5}
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 10V3L4 14h7v7l9-11h-7z"
-            />
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
           </svg>
         </div>
-        <span className="text-lg font-bold text-stone-900">Forge</span>
+        <span className="text-xl font-light tracking-tight text-[#1a1a1a]">Forge</span>
       </button>
 
       {/* Settings Button */}
