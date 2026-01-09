@@ -16,7 +16,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantStyles = {
   primary:
-    'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100',
+    'bg-amber-500 text-white shadow-sm hover:bg-amber-600 hover:shadow-md active:bg-amber-700 disabled:opacity-50',
   secondary:
     'bg-[#f5f5f4] text-[#525252] hover:bg-[#e5e5e5] active:bg-[#d4d4d4] disabled:opacity-50',
   ghost:

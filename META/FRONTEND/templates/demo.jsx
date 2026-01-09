@@ -133,7 +133,7 @@ export default function ForgeDemo() {
             <h2 className="text-xs uppercase tracking-[0.2em] text-[#a3a3a3] font-medium">
               Project Cards
             </h2>
-            <button className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg text-white text-sm font-medium shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all duration-300 hover:scale-[1.02]">
+            <button className="group flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 rounded-lg text-white text-sm font-medium shadow-sm hover:shadow-md transition-all duration-150">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M12 5v14M5 12h14"/>
               </svg>
@@ -259,7 +259,7 @@ export default function ForgeDemo() {
             Button Styles
           </h2>
           <div className="flex flex-wrap gap-4">
-            <button className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg text-white font-medium shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 hover:scale-[1.02] transition-all duration-300">
+            <button className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 rounded-lg text-white font-medium shadow-sm hover:shadow-md transition-all duration-150">
               Primary Action
             </button>
             <button className="px-5 py-2.5 bg-[#f5f5f4] hover:bg-[#e5e5e5] rounded-lg font-medium transition-colors text-[#525252]">

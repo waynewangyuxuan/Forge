@@ -4,6 +4,74 @@
 
 ---
 
+## 〇、Design System - Warm Industrial
+
+### 颜色系统
+
+| 名称 | 色值 | 用途 |
+|------|------|------|
+| Background | `#faf9f7` | 页面背景（warm white） |
+| Surface | `#ffffff` | 卡片、组件背景 |
+| Muted | `#f5f5f4` | 次要背景、hover 状态 |
+| Border | `#e5e5e5` | 边框 |
+| Border Light | `#f0f0f0` | 分隔线 |
+| Accent | amber-500 | 主色调（solid） |
+| Success | `#16a34a` (green-600) | 成功状态 |
+| Error | `#dc2626` (red-600) | 错误状态 |
+| Text | `#1a1a1a` | 主要文字 |
+| Text Secondary | `#525252` | 次要文字 |
+| Text Muted | `#737373` | 辅助文字 |
+| Text Placeholder | `#a3a3a3` | 占位符、标签 |
+
+### 字体系统
+
+**字体族**：DM Sans（Google Fonts），fallback: Inter, system-ui
+
+**字重使用规范**：
+
+| 使用场景 | 字重 | 额外样式 | 示例 |
+|----------|------|----------|------|
+| 页面标题 | `font-light` (300) | `tracking-tight` | "My Projects" |
+| Modal/空状态标题 | `font-light` (300) | `tracking-tight` | "No projects yet" |
+| 卡片标题 | `font-medium` (500) | - | Card header title |
+| 项目名/版本名 | `font-medium` (500) | - | ProjectCard title |
+| 正文 | `font-normal` (400) | - | 描述文字 |
+| 标签/小标题 | `font-medium` (500) | `uppercase tracking-wider` 或 `tracking-[0.2em]` | "DEVELOPMENT" |
+| 按钮文字 | `font-medium` (500) | - | "Create your first project" |
+
+**关键原则**：
+- 避免使用 `font-semibold` (600) 和 `font-bold` (700)，保持轻盈感
+- 大标题使用 `font-light tracking-tight` 实现优雅的"气质感"
+- 小标签使用 `uppercase tracking-wider` 增加层次感
+
+### 圆角系统
+
+| 组件 | 圆角 |
+|------|------|
+| 按钮 | `rounded-xl` (12px) |
+| 输入框 | `rounded-xl` (12px) |
+| 卡片 | `rounded-2xl` (16px) |
+| Modal | `rounded-2xl` (16px) |
+| Badge | `rounded-full` |
+| Logo | `rounded-xl` (12px) |
+
+### 阴影系统
+
+| 使用场景 | 阴影 |
+|----------|------|
+| 卡片默认 | `shadow-sm` |
+| 卡片 hover | `shadow-md` |
+| Primary 按钮 | `shadow-sm` |
+| Primary 按钮 hover | `shadow-md` |
+| Logo | `shadow-lg shadow-amber-500/25` |
+| Modal | `shadow-xl` |
+
+### 样式参考文件
+
+完整样式示例见：`META/FRONTEND/templates/demo.jsx`
+
+---
+
 ## 一、组件分层
 
 ```
@@ -47,7 +115,7 @@ components/
 
 | 变体 | 用途 | 样式要点 |
 |------|------|---------|
-| `primary` | 主要操作 | 渐变背景、amber 阴影 |
+| `primary` | 主要操作 | 纯色 amber-500 背景 |
 | `secondary` | 次要操作 | 灰色背景 |
 | `ghost` | 轻量操作 | 透明背景、amber 文字 |
 | `destructive` | 危险操作 | 红色背景 |
@@ -71,7 +139,7 @@ interface ButtonProps {
 
 ```typescript
 const variants = {
-  primary: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber hover:scale-[1.02]',
+  primary: 'bg-amber-500 text-white shadow-sm hover:bg-amber-600 hover:shadow-md active:bg-amber-700',
   secondary: 'bg-stone-100 text-stone-600 hover:bg-stone-200',
   ghost: 'bg-transparent text-amber-500 hover:bg-amber-50',
   destructive: 'bg-red-50 text-red-600 hover:bg-red-100',
