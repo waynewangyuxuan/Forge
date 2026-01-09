@@ -15,6 +15,11 @@ import {
   AddCredentialInput,
   Settings,
 } from './runtime.types'
+import {
+  GitHubAuthStatus,
+  GitHubRepo,
+  CreateRepoOptions,
+} from './github.types'
 
 // Note: These types will be used when implementing additional IPC channels:
 // - Execution, ExecutionPlan, ExecutionProgress from './execution.types'
@@ -312,6 +317,26 @@ export interface FileChangedEvent {
 }
 
 // ============================================================
+// GitHub Channels
+// ============================================================
+
+export interface GitHubCheckAuthOutput {
+  available: boolean
+  auth: GitHubAuthStatus
+}
+
+export interface GitHubCreateRepoInput {
+  name: string
+  options?: CreateRepoOptions
+}
+
+export interface GitHubCloneRepoInput {
+  owner: string
+  repo: string
+  destPath: string
+}
+
+// ============================================================
 // IPC Channel Map (for type-safe invoke)
 // ============================================================
 
@@ -345,6 +370,11 @@ export interface IPCChannelMap {
   'credentials:add': { input: AddCredentialInput; output: Credential }
   'credentials:update': { input: CredentialsUpdateInput; output: void }
   'credentials:delete': { input: CredentialsDeleteInput; output: void }
+
+  // GitHub
+  'github:checkAuth': { input: void; output: GitHubCheckAuthOutput }
+  'github:createRepo': { input: GitHubCreateRepoInput; output: GitHubRepo }
+  'github:cloneRepo': { input: GitHubCloneRepoInput; output: void }
 }
 
 /**
