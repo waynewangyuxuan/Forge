@@ -51,52 +51,94 @@ META/
 
 ## 三、开发流程
 
-### 3.1 开始任务前
+### 3.1 开始 Milestone 前
 
 1. **阅读相关文档**
    - 必读：`PRODUCT.md`、`REGULATION.md`、`FILE-STRUCTURE.md`
    - 根据任务阅读对应模块文档
 
-2. **查看 TODO.md**
-   - 确认当前任务
-   - 检查是否有阻塞项
-
-3. **查看当前 Milestone**
+2. **查看当前 Milestone**
    - `META/MILESTONES/Mx.md`
    - 了解任务上下文和验收标准
 
-### 3.2 开发过程中
+3. **分解 TODO 到 Sections**
+   - 将 Milestone 交付物分解为逻辑 Sections
+   - 每个 Section 包含相关的 feature tasks + tests
+   - 更新 `TODO.md` 记录详细分解
+   - Section 粒度：可独立完成、可独立测试、可独立 commit
 
-1. **高频 Commit**
-   - 每完成一个小功能就 commit
-   - Commit message 清晰描述改动
+**Section 分解示例：**
+```
+#### 1. Shared Layer - Types & Interfaces
+- [ ] 1.1 Create `shared/types/project.types.ts`
+- [ ] 1.2 Create `shared/types/ipc.types.ts`
+**Tests:**
+- [ ] 1.T1 Unit test for error classes
 
-2. **保持对齐**
+#### 2. Infrastructure - Database
+- [ ] 2.1 Install dependencies
+- [ ] 2.2 Create database initialization
+**Tests:**
+- [ ] 2.T1 Integration test: DB creation
+```
+
+> **设计理念**：Section-based 开发模式是 Forge 协调 AI 执行的核心模式。
+> 每个 Section 是一个原子工作单元，有明确的输入、输出和验证标准。
+> 这个模式同样适用于 Forge 生成的项目 TODO.md 结构。
+
+### 3.2 开发过程中（Section-based）
+
+1. **Section 为单位开发**
+   - 完成一个 Section 的所有 tasks + tests
+   - Section 内保持专注，避免跨 Section 修改
+   - 完成后立即 commit
+
+2. **Section Commit 规范**
+   ```
+   feat(m1): implement shared layer types and interfaces
+
+   - Add project.types.ts, ipc.types.ts
+   - Add repository interfaces
+   - Add error classes with serialization
+   ```
+
+3. **保持对齐**
    - 时刻对照 `PRODUCT.md` 确保符合产品设计
    - 遵循 `REGULATION.md` 代码规范
    - 文件结构符合 `FILE-STRUCTURE.md`
 
-3. **遇到问题**
+4. **遇到问题**
    - 创建 GitHub Issue 记录问题
    - 在 Issue 中描述问题、复现步骤、预期行为
 
-4. **发现新任务**
-   - 添加到 `TODO.md`
-   - 格式：日期 + 任务描述
+5. **发现新任务**
+   - 添加到 `TODO.md` 的 "Potential Additional Tasks" 部分
+   - 评估是否需要加入当前 Section 或后续处理
 
-### 3.3 完成任务后
+### 3.3 完成 Section 后
+
+1. **更新 TODO.md**
+   - 勾选 Section 内已完成的 tasks
+   - 保留未完成项，添加发现的新任务
+
+2. **Commit Section**
+   - 运行 lint 和 typecheck
+   - 提交本 Section 的所有改动
+   - Push 到远程
+
+### 3.4 完成 Milestone 后
 
 1. **更新 PROGRESS.md**
-   - 记录完成的工作
-   - 格式：日期 + 完成内容
+   - 按 Section 记录完成的工作
+   - 格式：日期 + Section 完成内容
 
 2. **更新 Milestone 状态**
-   - 勾选已完成的交付物
+   - 勾选 `Mx.md` 中的交付物
    - 更新 `MILESTONES/META.md` 进度表
 
-3. **检查 TODO.md**
-   - 移除已完成项
-   - 确认下一步任务
+3. **清理 TODO.md**
+   - 归档已完成的 Milestone tasks
+   - 将 Potential Tasks 评估后移入下个 Milestone
 
 ---
 
@@ -182,12 +224,20 @@ idle → running → success/failed
 
 ## 六、检查清单
 
-开发时定期自检：
+### Section 完成自检：
 
-- [ ] 代码是否符合 `REGULATION.md`？
-- [ ] 文件位置是否符合 `FILE-STRUCTURE.md`？
-- [ ] 功能是否符合 `PRODUCT.md` 定义？
-- [ ] 是否及时更新 `PROGRESS.md`？
-- [ ] 是否有遗漏任务需要加入 `TODO.md`？
-- [ ] 遇到问题是否创建了 GitHub Issue？
-- [ ] 是否保持高频 commit？
+- [ ] Section 内所有 tasks 完成？
+- [ ] Section 内所有 tests 通过？
+- [ ] 代码符合 `REGULATION.md`？
+- [ ] 文件位置符合 `FILE-STRUCTURE.md`？
+- [ ] Lint 和 TypeCheck 通过？
+- [ ] 已 commit 并 push？
+
+### Milestone 完成自检：
+
+- [ ] 所有 Sections 完成并 committed？
+- [ ] 验收标准全部满足？
+- [ ] `PROGRESS.md` 已更新？
+- [ ] `Mx.md` 交付物已勾选？
+- [ ] `MILESTONES/META.md` 进度表已更新？
+- [ ] 发现的新任务已记录到 `TODO.md`？
