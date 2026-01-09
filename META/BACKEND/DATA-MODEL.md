@@ -107,7 +107,7 @@ Forge App
 
 | 概念 | 说明 |
 |------|------|
-| **Project** | 一个项目，对应一个本地目录 |
+| **Project** | 一个项目，绑定 GitHub 仓库 |
 | **Version** | 项目的一个版本，对应一个 Git branch |
 | **Execution** | 一次开发流执行（生成代码的过程） |
 | **TaskAttempt** | 单个任务的一次尝试 |
@@ -135,22 +135,26 @@ not_configured → idle → running → success/failed
 
 ### 3.1 projects
 
-项目表。
+项目表。每个项目必须绑定 GitHub 仓库。
 
 ```sql
 CREATE TABLE projects (
   id            TEXT PRIMARY KEY,      -- UUID
   name          TEXT NOT NULL,         -- 显示名称
-  path          TEXT NOT NULL UNIQUE,  -- 本地路径（绝对路径）
+  github_repo   TEXT NOT NULL,         -- GitHub 仓库名 (e.g., "kindle-anki")
+  github_owner  TEXT NOT NULL,         -- GitHub 用户名 (e.g., "waynewang")
+  path          TEXT NOT NULL UNIQUE,  -- 本地路径（由 clone location + repo name 派生）
   created_at    TEXT NOT NULL,         -- ISO 8601
   archived_at   TEXT                   -- 归档时间，NULL 表示未归档
 );
 
 CREATE INDEX idx_projects_archived ON projects(archived_at);
+CREATE UNIQUE INDEX idx_projects_github ON projects(github_owner, github_repo);
 ```
 
 **说明**：
-- `path` 唯一，同一目录不能创建多个项目
+- `github_owner + github_repo` 唯一，同一仓库不能创建多个项目
+- `path` 由系统设置的 clone location + repo name 派生
 - `archived_at` 软删除，不物理删除
 
 ### 3.2 versions

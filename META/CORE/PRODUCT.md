@@ -69,12 +69,28 @@ Forge 管理两套独立但相关的流程：
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 项目约定结构
+### 2.2 GitHub 集成（必需）
+
+**设计理念**：每个 Forge 项目**必须**绑定 GitHub 仓库，用户无需手动选择本地路径。
+
+```
+创建项目 = 创建 GitHub 仓库 + Clone 到本地
+项目路径 = {github-clone-root}/{repo-name}
+组织方式 = 所有项目归属于用户 GitHub 的 "forge" Project
+```
+
+**好处**：
+- 用户无需关心本地路径，自动使用 GitHub clone 目录
+- 天然支持版本控制和协作
+- 通过 GitHub Project 统一管理所有 Forge 项目
+- 简化心智模型：项目 = GitHub 仓库
+
+### 2.3 项目目录结构
 
 每个 Forge 管理的项目遵循统一结构：
 
 ```
-~/Projects/{project-name}/
+{github-clone-root}/{repo-name}/   # 路径由 GitHub 决定
 ├── META/                      # 开发相关
 │   ├── CLAUDE.md              # AI 执行入口
 │   ├── TODO.md                # 任务清单
@@ -92,7 +108,7 @@ Forge 管理两套独立但相关的流程：
 └── .gitignore
 ```
 
-### 2.3 状态定义
+### 2.4 状态定义
 
 **开发流状态**（与状态机定义一致，详见 CONFIG-DRIVEN.md）
 ```typescript
@@ -128,14 +144,18 @@ type RuntimeStatus =
             │
             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  输入项目名称和位置                                           │
+│  创建 GitHub 仓库                                            │
 │  ┌─────────────────────────────────────────────────────────┐│
 │  │ Project Name: kindle-anki                               ││
-│  │ Location: ~/Projects/kindle-anki          [Browse]      ││
+│  │                                                         ││
+│  │ ✓ Create GitHub repository                              ││
+│  │   Repository will be created as: user/kindle-anki       ││
+│  │   Added to GitHub Project: "forge"                      ││
 │  └─────────────────────────────────────────────────────────┘│
 │                                         [Cancel] [Create]   │
 └─────────────────────────────────────────────────────────────┘
             │
+            │ 自动创建 GitHub 仓库 + Clone 到本地
             ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  编写 Spec                                                  │
@@ -474,13 +494,14 @@ AI 根据项目的 logs/ 结构生成 DASHBOARD.yaml，Forge 渲染：
 │  Settings → Defaults                                        │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  Projects Location:                                         │
-│  [~/Projects]                                    [Browse]   │
+│  GitHub:                                                    │
+│  Status: ✅ Connected (waynewang)                           │
+│  Clone Location: [~/github]                      [Browse]   │
+│  GitHub Project: forge                                      │
 │                                                             │
 │  Git:                                                       │
-│  ☑ Initialize Git for new projects                          │
 │  ☑ Auto-commit on milestone completion                      │
-│  ☐ Auto-push to remote                                      │
+│  ☑ Auto-push to remote                                      │
 │                                                             │
 │  Editor:                                                    │
 │  [Visual Studio Code ▼]                                     │
@@ -502,7 +523,9 @@ AI 根据项目的 logs/ 结构生成 DASHBOARD.yaml，Forge 渲染：
 interface Project {
   id: string;
   name: string;
-  path: string;                    // 本地路径
+  githubRepo: string;              // GitHub 仓库名 (e.g., "kindle-anki")
+  githubOwner: string;             // GitHub 用户名 (e.g., "waynewang")
+  path: string;                    // 本地路径（由 clone location + repo name 派生）
   createdAt: Date;
   updatedAt: Date;
 }

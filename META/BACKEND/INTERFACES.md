@@ -278,6 +278,58 @@ interface IGitAdapter {
 }
 ```
 
+### 4.6 IGitHubAdapter
+
+GitHub API 操作。用于创建仓库、管理 Project 等。
+
+```typescript
+interface IGitHubAdapter {
+  // 认证
+  isAuthenticated(): Promise<boolean>
+  authenticate(): Promise<GitHubUser>
+  getUser(): Promise<GitHubUser | null>
+
+  // 仓库操作
+  createRepository(name: string, options?: CreateRepoOptions): Promise<GitHubRepo>
+  cloneRepository(repo: GitHubRepo, destPath: string): Promise<string>
+  deleteRepository(owner: string, repo: string): Promise<void>
+
+  // GitHub Project 操作
+  ensureProject(projectName: string): Promise<GitHubProject>
+  addRepoToProject(projectId: string, repoId: string): Promise<void>
+
+  // 获取 clone 根目录
+  getCloneRoot(): Promise<string>
+}
+
+interface GitHubUser {
+  login: string
+  name: string
+  avatarUrl: string
+}
+
+interface GitHubRepo {
+  id: string
+  name: string
+  fullName: string          // e.g., "waynewang/kindle-anki"
+  htmlUrl: string
+  cloneUrl: string
+  sshUrl: string
+}
+
+interface GitHubProject {
+  id: string
+  name: string
+  number: number
+}
+
+interface CreateRepoOptions {
+  description?: string
+  private?: boolean
+  autoInit?: boolean
+}
+```
+
 ---
 
 ## 五、接口与实现的对应
@@ -293,6 +345,7 @@ interface IGitAdapter {
 | ISchedulerAdapter | NodeCronSchedulerAdapter | node-cron |
 | ICredentialStore | KeytarCredentialStore | keytar |
 | IGitAdapter | ShellGitAdapter | child_process |
+| IGitHubAdapter | OctokitGitHubAdapter | @octokit/rest, gh CLI |
 
 ---
 

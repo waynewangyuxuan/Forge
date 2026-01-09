@@ -40,10 +40,10 @@ src/shared/types/
 | 通道 | 输入 | 输出 | 说明 |
 |------|------|------|------|
 | `project:list` | `{ includeArchived?: boolean }` | `Project[]` | 获取项目列表 |
-| `project:create` | `{ name, path }` | `Project` | 创建项目 |
+| `project:create` | `{ name }` | `Project` | 创建项目（自动创建 GitHub 仓库） |
 | `project:get` | `{ id }` | `Project \| null` | 获取项目详情 |
 | `project:archive` | `{ id }` | `void` | 归档项目 |
-| `project:delete` | `{ id }` | `void` | 删除项目 |
+| `project:delete` | `{ id }` | `void` | 删除项目（可选删除 GitHub 仓库） |
 
 ### 2.2 Version
 
@@ -137,6 +137,20 @@ src/shared/types/
 | `system:selectFolder` | `{ title?, defaultPath? }` | `string \| null` | 弹出目录选择对话框 |
 | `system:checkClaude` | `void` | `{ available, version? }` | 检查 Claude CLI 是否可用 |
 | `system:getAppInfo` | `void` | `{ version, dataPath }` | 获取应用信息 |
+
+### 2.11 GitHub
+
+| 通道 | 输入 | 输出 | 说明 |
+|------|------|------|------|
+| `github:checkAuth` | `void` | `GitHubAuthStatus` | 检查 GitHub 认证状态 |
+| `github:authenticate` | `void` | `GitHubUser` | 触发 GitHub OAuth 认证 |
+| `github:getUser` | `void` | `GitHubUser \| null` | 获取当前认证用户 |
+| `github:getCloneRoot` | `void` | `string` | 获取 clone 根目录 |
+| `github:setCloneRoot` | `{ path }` | `void` | 设置 clone 根目录 |
+
+`GitHubAuthStatus` 结构：`{ authenticated, user? }`
+
+**注意**：`project:create` 会自动调用 GitHub API 创建仓库并 clone，无需单独调用 GitHub 通道。
 
 ---
 

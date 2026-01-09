@@ -144,6 +144,30 @@
 - 点击 [VSCode] → 调用 shell:openInEditor
 - 点击 [+ New Project] → 打开创建弹窗
 
+**CreateProjectModal**：
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Create New Project                              [×]    │
+│                                                         │
+│  Project Name                                           │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ kindle-anki                                     │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  ✓ Create GitHub repository                             │
+│    Repository: waynewang/kindle-anki                    │
+│    Added to GitHub Project: "forge"                     │
+│                                                         │
+│                          [Cancel]  [Create Project]     │
+└─────────────────────────────────────────────────────────┘
+```
+
+- 只需输入项目名称
+- 自动创建 GitHub 仓库
+- 自动 clone 到配置的 clone root 目录
+- 自动添加到 GitHub Project "forge"
+
 ---
 
 ### 3.2 项目概览 `/projects/:id`
@@ -511,7 +535,7 @@
 
 ### 3.8 全局设置 `/settings`
 
-**功能**：管理全局配置和凭证
+**功能**：管理 GitHub 连接、全局配置和凭证
 
 **布局**：
 
@@ -524,11 +548,18 @@
 │                                                                 │
 │  Settings                                                       │
 │                                                                 │
+│  GitHub                                                         │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  Status: ✅ Connected as @waynewang                      │   │
+│  │                                         [Disconnect]     │   │
+│  │                                                         │   │
+│  │  Clone Location                                          │   │
+│  │  [~/Projects]                              [Browse]     │   │
+│  │  Projects will be cloned to this directory               │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
 │  General                                                        │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Default Projects Location                              │   │
-│  │  [~/Projects]                              [Browse]     │   │
-│  │                                                         │   │
 │  │  Editor                                                 │   │
 │  │  [Visual Studio Code ▼]                                 │   │
 │  └─────────────────────────────────────────────────────────┘   │
@@ -548,7 +579,19 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+**未连接 GitHub 时**：
+
+```
+│  GitHub                                                         │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  Status: ⚠️ Not connected                                │   │
+│  │  Connect to GitHub to create and manage projects.       │   │
+│  │                                       [Connect GitHub]   │   │
+│  └─────────────────────────────────────────────────────────┘   │
+```
+
 **组件**：
+- Card（GitHub 连接状态）
 - Card（General 设置）
 - Card（Credentials 列表）
 - Card（Claude 状态）
@@ -556,6 +599,11 @@
 - Select
 - Button
 - Modal（添加/编辑 Credential）
+
+**GitHub 管理**：
+- 显示 GitHub 认证状态和用户名
+- Clone Location 配置（Browse 选择）
+- 未认证时显示 [Connect GitHub] 按钮
 
 **Credentials 管理**：
 - 列表显示 nickname、type、masked value
