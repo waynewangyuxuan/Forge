@@ -34,10 +34,12 @@ export interface Version {
 
 /**
  * Input for creating a new project
+ * GitHub-first: name is used as repo name, path is derived from cloneRoot
  */
 export interface CreateProjectInput {
-  name: string
-  path: string
+  name: string // Also used as GitHub repo name
+  description?: string // Optional repo description
+  private?: boolean // Private repo (default: false)
 }
 
 /**
