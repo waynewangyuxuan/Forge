@@ -87,7 +87,7 @@ export const Modal: React.FC<ModalProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e5e5]">
-          <h2 id="modal-title" className="text-lg font-semibold text-[#1a1a1a]">
+          <h2 id="modal-title" className="text-lg font-light tracking-tight text-[#1a1a1a]">
             {title}
           </h2>
           <button

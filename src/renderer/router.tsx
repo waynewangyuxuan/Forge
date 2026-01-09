@@ -14,8 +14,8 @@ import { SettingsPage } from './pages/SettingsPage'
 const PlaceholderPage = ({ title }: { title: string }) => (
   <div className="flex items-center justify-center h-full">
     <div className="text-center">
-      <h2 className="text-lg font-semibold text-stone-900 mb-2">{title}</h2>
-      <p className="text-stone-500">This page will be implemented in a future milestone.</p>
+      <h2 className="text-xl font-light tracking-tight text-[#1a1a1a] mb-2">{title}</h2>
+      <p className="text-[#737373]">This page will be implemented in a future milestone.</p>
     </div>
   </div>
 )

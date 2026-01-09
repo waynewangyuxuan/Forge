@@ -48,7 +48,7 @@ export const Card: React.FC<CardProps> = ({
       {header && (
         <div className="flex items-center justify-between px-4 py-3 bg-[#fafafa] border-b border-[#f0f0f0]">
           <div>
-            <h3 className="text-sm font-semibold text-[#1a1a1a]">{header.title}</h3>
+            <h3 className="text-sm font-medium text-[#1a1a1a]">{header.title}</h3>
             {header.subtitle && (
               <p className="text-xs text-[#737373] mt-0.5">{header.subtitle}</p>
             )}

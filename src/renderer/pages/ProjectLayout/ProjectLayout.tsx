@@ -58,10 +58,10 @@ export const ProjectLayout: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <h2 className="text-lg font-semibold text-stone-900 mb-2">
+          <h2 className="text-xl font-light tracking-tight text-[#1a1a1a] mb-2">
             Project not found
           </h2>
-          <p className="text-stone-500">
+          <p className="text-[#737373]">
             The project you are looking for does not exist.
           </p>
         </div>

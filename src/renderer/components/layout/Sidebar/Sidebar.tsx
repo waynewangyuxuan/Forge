@@ -107,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Project Header */}
       <div className="p-4 border-b border-[#e5e5e5]">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="font-semibold text-[#1a1a1a] truncate">{project.name}</h2>
+          <h2 className="font-medium text-[#1a1a1a] truncate">{project.name}</h2>
           <button
             onClick={toggle}
             className="p-1 rounded hover:bg-[#f5f5f4] transition-colors"

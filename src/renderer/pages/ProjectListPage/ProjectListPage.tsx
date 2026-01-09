@@ -110,7 +110,7 @@ export const ProjectListPage: React.FC = () => {
               />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold text-[#1a1a1a] mb-2">
+          <h2 className="text-xl font-light tracking-tight text-[#1a1a1a] mb-2">
             No projects yet
           </h2>
           <p className="text-[#737373] mb-6 max-w-sm">
