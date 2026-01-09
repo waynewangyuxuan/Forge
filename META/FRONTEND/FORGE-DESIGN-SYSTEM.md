@@ -65,11 +65,13 @@
 ### 2.5 渐变
 
 ```css
-/* Primary Gradient - 用于主按钮、Logo */
---gradient-primary: linear-gradient(to right, #f59e0b, #ea580c);
+/* 注意：主按钮不再使用渐变，改用纯色 amber-500 */
 
-/* Progress Bar */
+/* Progress Bar - 保留渐变增加视觉趣味 */
 --gradient-progress: linear-gradient(to right, #f59e0b, #f97316);
+
+/* Logo - 保留渐变作为品牌标识 */
+--gradient-logo: linear-gradient(to bottom right, #f59e0b, #ea580c);
 ```
 
 ---
@@ -195,7 +197,7 @@
 /* 大阴影 - 弹窗 */
 --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
-/* 品牌阴影 - Primary 按钮 */
+/* 品牌阴影 - Logo */
 --shadow-amber: 0 4px 14px -3px rgb(245 158 11 / 0.25);
 ```
 
@@ -207,13 +209,14 @@
 
 #### Primary Button
 ```
-背景: gradient-primary
+背景: amber-500 (#f59e0b)
 文字: white
-圆角: rounded-lg (8px)
+圆角: rounded-xl (12px)
 内边距: 10px 20px (py-2.5 px-5)
 字体: 14px medium
-阴影: shadow-amber
-Hover: scale(1.02) + shadow 加深
+阴影: shadow-sm
+Hover: amber-600 + shadow-md
+Active: amber-700
 ```
 
 #### Secondary Button
@@ -439,8 +442,8 @@ transition: transform 0.3s ease;
 ```css
 /* 按钮 hover */
 .btn-primary:hover {
-  transform: scale(1.02);
-  box-shadow: var(--shadow-amber-lg);
+  background-color: var(--accent-dark);
+  box-shadow: var(--shadow-md);
 }
 
 /* 卡片 hover */
@@ -540,7 +543,7 @@ transition: transform 0.3s ease;
 
 ### 组件
 - [ ] 按钮圆角 8px，卡片圆角 16px
-- [ ] Primary 按钮使用渐变 + amber 阴影
+- [ ] Primary 按钮使用纯色 amber-500 背景
 - [ ] 状态点使用 8px 圆形
 - [ ] 执行中状态有 shimmer 或 pulse 动画
 
