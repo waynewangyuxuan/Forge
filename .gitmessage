@@ -1,0 +1,62 @@
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+#
+# ────────────────────────────────────────────────────────────────
+# Type:
+#   feat     - New feature
+#   fix      - Bug fix
+#   refactor - Code refactoring (no functional change)
+#   docs     - Documentation only
+#   style    - Code style (formatting, missing semicolons, etc)
+#   test     - Adding or updating tests
+#   chore    - Build process, dependencies, CI changes
+#   perf     - Performance improvement
+#
+# Scope (optional):
+#   project  - Project management module
+#   version  - Version management module
+#   spec     - Spec editing module
+#   scaffold - Scaffold generation module
+#   review   - Review flow module
+#   execution- Code execution module
+#   runtime  - Runtime management module
+#   dashboard- Dashboard module
+#   ipc      - IPC layer
+#   ui       - UI components
+#   store    - State management
+#   infra    - Infrastructure (adapters, repos)
+#   config   - Configuration
+#
+# Subject:
+#   - Use imperative mood: "add" not "added" or "adds"
+#   - Don't capitalize first letter
+#   - No period at the end
+#   - Max 50 characters
+#
+# Body (optional):
+#   - Explain what and why, not how
+#   - Wrap at 72 characters
+#
+# Footer (optional):
+#   - Reference issues: "Closes #123" or "Refs #456"
+#   - Breaking changes: "BREAKING CHANGE: description"
+#
+# ────────────────────────────────────────────────────────────────
+# Examples:
+#
+#   feat(project): add create project use case
+#
+#   fix(execution): handle task failure correctly
+#
+#   Execution was not properly handling task failures.
+#   Now it emits taskFailed event and waits for user decision.
+#
+#   Closes #42
+#
+#   refactor(store): simplify realtime store subscription
+#
+#   chore: update dependencies
+# ────────────────────────────────────────────────────────────────
