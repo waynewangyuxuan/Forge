@@ -9,38 +9,77 @@ All tasks completed. See PROGRESS.md for details.
 
 ---
 
-## Next: M2 Preparation
+## M2: Project Management (IN PROGRESS)
 
-### M2: Spec 编辑与 Scaffold 生成
+### Completed Sections
 
-#### 1. File System Adapter
-- [ ] Create `main/infrastructure/adapters/file-system.adapter.ts`
-- [ ] Implement read/write for spec files (PRODUCT.md, TECHNICAL.md, REGULATION.md)
-- [ ] Implement directory operations for project structure
+#### 1. Application Layer - Use Cases
+- [x] Create project use cases (create, list, get, archive, delete)
+- [x] Create version use cases (create, list, get, set-active)
 
-#### 2. Spec IPC Handlers
+#### 2. FileSystem Adapter
+- [x] Create `main/infrastructure/adapters/file-system.adapter.ts`
+- [x] Implement directory operations for project structure
+
+#### 3. Refactor IPC Handlers
+- [x] Wire IPC handlers to use cases instead of direct repo calls
+
+#### 4. Frontend Primitives
+- [x] Create Button, Input, Card, Modal, Badge, Spinner components
+
+#### 5. ProjectListPage + ProjectCard
+- [x] Create `renderer/pages/ProjectListPage/` - Project list view
+- [x] Create `renderer/components/composites/ProjectCard/` - Project card
+
+#### 6. CreateProjectModal
+- [x] Create modal with name, path inputs and Browse button
+
+#### 7. Router Configuration
+- [x] Set up React Router with nested routes
+- [x] Create RootLayout, Header, ProjectLayout
+
+#### 8. Sidebar Component
+- [x] Create Sidebar with navigation and version selector
+
+#### 9. OverviewPage
+- [x] Create project overview with status cards
+
+#### 10. Style System
+- [x] Apply Warm Industrial design from demo.jsx
+- [x] Update all components with consistent color palette
+
+### Remaining Tasks
+
+#### Integration & Verification
+- [ ] End-to-end test: Create project flow
+- [ ] End-to-end test: Navigate project pages
+- [ ] End-to-end test: Archive/delete project
+- [ ] Manual verification in dev mode
+
+---
+
+## Next: M3 Preparation
+
+### M3: Spec 编辑与 Scaffold 生成
+
+#### 1. Spec IPC Handlers
 - [ ] Create `main/infrastructure/ipc/spec.ipc.ts`
 - [ ] Implement `spec:read`, `spec:save` handlers
 - [ ] Implement `spec:generateScaffold` handler (stub)
 
-#### 3. Frontend Pages
-- [ ] Create `renderer/pages/ProjectListPage/` - Project list view
+#### 2. Frontend Pages
 - [ ] Create `renderer/pages/SpecPage/` - Spec editor view
-- [ ] Set up React Router with routes
 
-#### 4. Components
-- [ ] Create basic primitives (Button, Input, Card, etc.)
+#### 3. Components
 - [ ] Create MarkdownEditor component (simple textarea initially)
-- [ ] Create navigation/sidebar components
 
-#### 5. Integration
-- [ ] Wire up project creation flow end-to-end
+#### 4. Integration
 - [ ] Wire up spec editing flow
 - [ ] Test IPC communication with real UI
 
 ---
 
-### Potential Tasks (discovered during M1)
+### Potential Tasks (discovered during M1/M2)
 - [x] P1. TypeScript path aliases setup (`@shared`) - Done
 - [x] P2. Vitest configuration for main process tests - Done
 - [x] P3. Test utilities and fixtures setup - Done
@@ -48,3 +87,5 @@ All tasks completed. See PROGRESS.md for details.
 - [x] P5. Date formatting utility (ISO 8601) - Done
 - [ ] P6. Logger setup for main process
 - [x] P7. Electron app data path utility - Done
+- [ ] P8. Add tests for M2 use cases
+- [ ] P9. Add tests for M2 components (optional)
