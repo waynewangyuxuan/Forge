@@ -183,3 +183,79 @@ Implementing M2 (Project Management) milestone. Building the project and version
 - Run tests, verify build
 
 ---
+
+## 2026-01-09 - M2.5: GitHub Integration - Complete
+
+### Summary
+Implemented GitHub-first project creation workflow. Every project is now bound to a GitHub repository. Projects are created on GitHub first, then cloned locally.
+
+### Completed Sections
+
+#### Section 1: Shared Types & Errors
+- Created `shared/types/github.types.ts` - GitHubAuthStatus, GitHubUser, GitHubRepo, CreateRepoOptions
+- Updated `shared/constants.ts` - Added GitHub error codes
+- Updated `shared/errors.ts` - Added GitHubNotAuthenticatedError, GitHubCLINotFoundError, GitHubRepoExistsError, GitHubOperationError
+- Updated `shared/types/runtime.types.ts` - Added cloneRoot to Settings
+
+#### Section 2: Database Schema Migration
+- Updated `main/infrastructure/database/schema.ts` - SCHEMA_VERSION=2, added github_repo/github_owner columns
+- Updated `main/infrastructure/database/index.ts` - Added migration logic v1→v2
+- Updated `shared/types/project.types.ts` - Added githubRepo, githubOwner to Project interface
+- Updated `main/infrastructure/repositories/sqlite-project.repo.ts` - Handle new GitHub fields
+
+#### Section 3: Settings Persistence
+- Created `main/infrastructure/repositories/sqlite-settings.repo.ts` - SQLiteSettingsRepository
+- Updated `main/infrastructure/ipc/system.ipc.ts` - Use repository instead of in-memory cache
+
+#### Section 4: GitHubAdapter Implementation
+- Created `main/infrastructure/adapters/github.adapter.ts` - GitHubAdapter using gh CLI
+- Added `shared/interfaces/adapters.ts` - IGitHubAdapter interface
+- Implemented: isAvailable, checkAuth, createRepo, cloneRepo, getAuthenticatedUser
+
+#### Section 5: GitHub IPC Handlers
+- Created `main/infrastructure/ipc/github.ipc.ts` - GitHub IPC handlers
+- Updated `shared/types/ipc.types.ts` - Added GitHub channel types
+- Channels: github:checkAuth, github:createRepo, github:cloneRepo
+
+#### Section 6: Update CreateProjectUseCase
+- Rewrote `main/application/use-cases/project/create-project.ts` - GitHub-first workflow
+- Updated `main/infrastructure/ipc/project.ipc.ts` - Pass GitHub dependencies
+- Updated `shared/types/project.types.ts` - Changed CreateProjectInput (removed path, added description/private)
+
+#### Section 7: useGitHubAuth Hook
+- Created `renderer/hooks/useGitHubAuth.ts` - React hook for GitHub auth status
+- Created `renderer/hooks/index.ts` - Hooks index
+
+#### Section 8: Update CreateProjectModal
+- Rewrote `renderer/components/composites/CreateProjectModal/CreateProjectModal.tsx`
+- Removed path selection, added description and private repo options
+- GitHub-specific error handling
+
+#### Section 9: Update SettingsPage
+- Rewrote `renderer/pages/SettingsPage/SettingsPage.tsx`
+- GitHub connection status with user avatar
+- Clone root configuration with folder browser
+
+#### Section 10: Integration Testing
+- TypeCheck: ✓
+- Lint: ✓ (only pre-existing warnings)
+- Tests: 62 passing
+- Build: ✓
+
+### Commits
+- `8313a83` feat(m2.5): add GitHub types and error classes
+- `e59f885` feat(m2.5): add GitHub fields to projects schema
+- `af8d701` feat(m2.5): persist settings to SQLite database
+- `310fc7d` feat(m2.5): implement GitHubAdapter using gh CLI
+- `a7d6bf8` feat(m2.5): add GitHub IPC handlers
+- `b9b6381` feat(m2.5): implement GitHub-first project creation
+- `f819cfa` feat(m2.5): add useGitHubAuth hook
+- `dd76c79` feat(m2.5): implement SettingsPage with GitHub connection status
+
+### Key Changes
+- Projects are GitHub-first: every project is bound to a GitHub repository
+- Path is derived from cloneRoot + repoName (no manual path selection)
+- GitHub CLI (gh) is used for all GitHub operations (no OAuth tokens stored)
+- Settings now persist to SQLite database
+
+---

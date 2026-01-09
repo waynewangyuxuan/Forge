@@ -9,52 +9,55 @@ All tasks completed. See PROGRESS.md for details.
 
 ---
 
-## M2: Project Management (IN PROGRESS)
+## M2: Project Management (COMPLETE)
+
+All tasks completed. See PROGRESS.md for details.
+
+---
+
+## M2.5: GitHub Integration (COMPLETE)
 
 ### Completed Sections
 
-#### 1. Application Layer - Use Cases
-- [x] Create project use cases (create, list, get, archive, delete)
-- [x] Create version use cases (create, list, get, set-active)
+#### 1. Shared Types & Errors
+- [x] Create `shared/types/github.types.ts`
+- [x] Add GitHub error codes to constants
+- [x] Add GitHub error classes to errors.ts
 
-#### 2. FileSystem Adapter
-- [x] Create `main/infrastructure/adapters/file-system.adapter.ts`
-- [x] Implement directory operations for project structure
+#### 2. Database Schema Migration
+- [x] Update schema to v2 with github_repo/github_owner columns
+- [x] Add migration logic v1→v2
+- [x] Update Project interface and repository
 
-#### 3. Refactor IPC Handlers
-- [x] Wire IPC handlers to use cases instead of direct repo calls
+#### 3. Settings Persistence
+- [x] Create SQLiteSettingsRepository
+- [x] Update system IPC to use repository
 
-#### 4. Frontend Primitives
-- [x] Create Button, Input, Card, Modal, Badge, Spinner components
+#### 4. GitHubAdapter Implementation
+- [x] Create GitHubAdapter using gh CLI
+- [x] Add IGitHubAdapter interface
 
-#### 5. ProjectListPage + ProjectCard
-- [x] Create `renderer/pages/ProjectListPage/` - Project list view
-- [x] Create `renderer/components/composites/ProjectCard/` - Project card
+#### 5. GitHub IPC Handlers
+- [x] Create github.ipc.ts with checkAuth, createRepo, cloneRepo
 
-#### 6. CreateProjectModal
-- [x] Create modal with name, path inputs and Browse button
+#### 6. Update CreateProjectUseCase
+- [x] Implement GitHub-first workflow
+- [x] Update project IPC with new dependencies
 
-#### 7. Router Configuration
-- [x] Set up React Router with nested routes
-- [x] Create RootLayout, Header, ProjectLayout
+#### 7. useGitHubAuth Hook
+- [x] Create useGitHubAuth hook for frontend
 
-#### 8. Sidebar Component
-- [x] Create Sidebar with navigation and version selector
+#### 8. Update CreateProjectModal
+- [x] Remove path selection
+- [x] Add description and private repo options
 
-#### 9. OverviewPage
-- [x] Create project overview with status cards
+#### 9. Update SettingsPage
+- [x] GitHub connection status display
+- [x] Clone root configuration
 
-#### 10. Style System
-- [x] Apply Warm Industrial design from demo.jsx
-- [x] Update all components with consistent color palette
-
-### Remaining Tasks
-
-#### Integration & Verification
-- [ ] End-to-end test: Create project flow
-- [ ] End-to-end test: Navigate project pages
-- [ ] End-to-end test: Archive/delete project
-- [ ] Manual verification in dev mode
+#### 10. Integration Testing
+- [x] All tests passing
+- [x] Build successful
 
 ---
 
