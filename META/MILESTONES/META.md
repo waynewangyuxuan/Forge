@@ -21,7 +21,7 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 
 | File | Status | Description |
 |------|--------|-------------|
-| [M0.md](M0.md) | pending | 项目脚手架 - Electron + React + TypeScript 环境搭建 |
+| [M0.md](M0.md) | complete | 项目脚手架 - Electron + React + TypeScript 环境搭建 |
 | [M1.md](M1.md) | pending | 核心基础设施 - SQLite、IPC、Config Loader |
 | [M2.md](M2.md) | pending | 项目管理 - Project/Version CRUD |
 | [M3.md](M3.md) | pending | Spec 编辑 - Markdown 编辑器 |
@@ -36,7 +36,7 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 
 | Milestone | 状态 | 开始日期 | 完成日期 |
 |-----------|------|---------|---------|
-| M0 | pending | - | - |
+| M0 | complete | 2025-01-09 | 2025-01-09 |
 | M1 | pending | - | - |
 | M2 | pending | - | - |
 | M3 | pending | - | - |
