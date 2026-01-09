@@ -9,6 +9,7 @@ import { ProjectListPage } from './pages/ProjectListPage'
 import { ProjectLayout } from './pages/ProjectLayout'
 import { OverviewPage } from './pages/OverviewPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { SpecPage } from './pages/SpecPage'
 
 // Placeholder page for routes not yet implemented
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -48,7 +49,7 @@ export const router = createHashRouter([
           // Development flow
           {
             path: 'spec',
-            element: <PlaceholderPage title="Spec Editor" />,
+            element: <SpecPage />,
           },
           {
             path: 'review',

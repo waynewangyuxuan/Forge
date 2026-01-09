@@ -8,3 +8,6 @@ export * from './project'
 
 // Version use cases
 export * from './version'
+
+// Spec use cases
+export * from './spec'

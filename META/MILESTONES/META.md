@@ -28,7 +28,7 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 | [M1.md](M1.md) | ✅ complete | 核心基础设施 - SQLite、IPC、Config Loader |
 | [M2.md](M2.md) | ✅ complete | 项目管理 - Project/Version CRUD |
 | [M2.5.md](M2.5.md) | ✅ complete | GitHub 集成 - GitHub-first 项目创建 |
-| [M3.md](M3.md) | pending | Spec 编辑 - Markdown 编辑器 |
+| [M3.md](M3.md) | 🚧 in-progress | Spec 编辑 - Markdown 编辑器 (CodeMirror) |
 | [M4.md](M4.md) | pending | Scaffold 生成 - AI 生成 TODO.md |
 | [M5.md](M5.md) | pending | Review 流程 - TODO 审核与 Approve |
 | [M6.md](M6.md) | pending | 代码执行 - 任务逐个执行 |
@@ -44,7 +44,7 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 | M1 | ✅ complete | 2025-01-09 | 2025-01-09 |
 | M2 | ✅ complete | 2025-01-09 | 2025-01-09 |
 | M2.5 | ✅ complete | 2026-01-09 | 2026-01-09 |
-| M3 | pending | - | - |
+| M3 | 🚧 in-progress | 2026-01-09 | - |
 | M4 | pending | - | - |
 | M5 | pending | - | - |
 | M6 | pending | - | - |

@@ -7,6 +7,7 @@ import { registerProjectHandlers } from './project.ipc'
 import { registerVersionHandlers } from './version.ipc'
 import { registerSystemHandlers } from './system.ipc'
 import { registerGitHubHandlers } from './github.ipc'
+import { registerSpecHandlers } from './spec.ipc'
 
 /**
  * Register all IPC handlers
@@ -17,9 +18,9 @@ export function registerAllIPCHandlers(): void {
   registerVersionHandlers()
   registerSystemHandlers()
   registerGitHubHandlers()
+  registerSpecHandlers()
 
   // Future handlers will be registered here:
-  // registerSpecHandlers()
   // registerReviewHandlers()
   // registerExecutionHandlers()
   // registerRuntimeHandlers()
@@ -33,3 +34,4 @@ export { registerProjectHandlers } from './project.ipc'
 export { registerVersionHandlers } from './version.ipc'
 export { registerSystemHandlers } from './system.ipc'
 export { registerGitHubHandlers } from './github.ipc'
+export { registerSpecHandlers } from './spec.ipc'
