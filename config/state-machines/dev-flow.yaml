@@ -1,0 +1,83 @@
+# Development Flow State Machine
+# Manages the lifecycle of code generation from spec to completed project
+
+name: dev-flow
+initialState: drafting
+
+states:
+  - drafting      # Writing/editing spec files
+  - scaffolding   # AI generating TODO.md
+  - reviewing     # User reviewing TODO.md
+  - ready         # Approved, waiting to execute
+  - executing     # Claude generating code
+  - paused        # Execution paused by user
+  - completed     # All tasks done
+  - error         # Error occurred
+
+transitions:
+  # From drafting
+  - event: GENERATE_SCAFFOLD
+    from: drafting
+    to: scaffolding
+
+  # From scaffolding
+  - event: SCAFFOLD_SUCCESS
+    from: scaffolding
+    to: reviewing
+  - event: SCAFFOLD_ERROR
+    from: scaffolding
+    to: error
+
+  # From reviewing
+  - event: REGENERATE
+    from: reviewing
+    to: scaffolding
+  - event: APPROVE
+    from: reviewing
+    to: ready
+  - event: EDIT_SPEC
+    from: reviewing
+    to: drafting
+
+  # From ready
+  - event: START_EXECUTION
+    from: ready
+    to: executing
+
+  # From executing
+  - event: PAUSE
+    from: executing
+    to: paused
+  - event: TASK_ERROR
+    from: executing
+    to: paused
+  - event: ALL_COMPLETE
+    from: executing
+    to: completed
+  - event: ABORT
+    from: executing
+    to: error
+
+  # From paused
+  - event: RESUME
+    from: paused
+    to: executing
+  - event: ABORT
+    from: paused
+    to: error
+  - event: RETRY
+    from: paused
+    to: executing
+
+  # From error
+  - event: RETRY
+    from: error
+    to: drafting
+  - event: FIX_AND_CONTINUE
+    from: error
+    to: reviewing
+
+  # From completed (iterate to new version)
+  - event: ITERATE
+    from: completed
+    to: drafting
