@@ -1,0 +1,53 @@
+# Runtime Flow State Machine
+# Manages the lifecycle of running a completed project
+
+name: runtime-flow
+initialState: not_configured
+
+states:
+  - not_configured  # Runtime not set up yet
+  - idle            # Configured, waiting for trigger
+  - running         # Currently executing run.sh
+  - success         # Last run succeeded
+  - failed          # Last run failed
+
+transitions:
+  # From not_configured
+  - event: CONFIGURE
+    from: not_configured
+    to: idle
+
+  # From idle
+  - event: TRIGGER
+    from: idle
+    to: running
+  - event: UNCONFIGURE
+    from: idle
+    to: not_configured
+
+  # From running
+  - event: RUN_SUCCESS
+    from: running
+    to: success
+  - event: RUN_FAILED
+    from: running
+    to: failed
+  - event: STOP
+    from: running
+    to: idle
+
+  # From success
+  - event: TRIGGER
+    from: success
+    to: running
+  - event: UNCONFIGURE
+    from: success
+    to: not_configured
+
+  # From failed
+  - event: TRIGGER
+    from: failed
+    to: running
+  - event: UNCONFIGURE
+    from: failed
+    to: not_configured

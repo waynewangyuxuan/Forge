@@ -1,0 +1,15 @@
+# Execution Configuration
+# Global settings for code generation execution
+
+# Commit strategy options:
+# - each_task: Commit after each TODO item
+# - each_milestone: Commit after each milestone
+# - manual: Never auto-commit
+defaultCommitStrategy: each_milestone
+
+# Maximum time (in seconds) to wait for a single task
+# Claude Code typically takes 30-120 seconds per task
+taskTimeout: 300
+
+# Maximum number of retries for a failed task
+maxRetries: 3

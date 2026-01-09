@@ -1,5 +1,7 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
+import { initializeDatabase, closeDatabase } from './infrastructure/database'
+import { registerAllIPCHandlers } from './infrastructure/ipc'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -47,6 +49,14 @@ function createWindow(): void {
 
 // App lifecycle
 app.whenReady().then(() => {
+  // Initialize database before creating window
+  initializeDatabase()
+  console.log('[Forge] Database initialized')
+
+  // Register IPC handlers
+  registerAllIPCHandlers()
+  console.log('[Forge] IPC handlers registered')
+
   createWindow()
 
   app.on('activate', () => {
@@ -60,4 +70,10 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// Clean up on quit
+app.on('before-quit', () => {
+  closeDatabase()
+  console.log('[Forge] Database closed')
 })
