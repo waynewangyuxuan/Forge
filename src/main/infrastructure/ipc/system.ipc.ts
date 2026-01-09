@@ -8,7 +8,7 @@ import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 import { getAppDataPath } from '../database'
 import { serializeError } from '@shared/errors'
-import { DEFAULT_SETTINGS } from '@shared/constants'
+import { SQLiteSettingsRepository } from '../repositories/sqlite-settings.repo'
 import type {
   SystemSelectFolderInput,
   SystemSelectFolderOutput,
@@ -19,8 +19,8 @@ import type { Settings } from '@shared/types/runtime.types'
 
 const execAsync = promisify(exec)
 
-// In-memory settings cache (will be persisted to DB in full implementation)
-let settingsCache: Settings = { ...DEFAULT_SETTINGS }
+// Settings repository singleton
+const settingsRepo = new SQLiteSettingsRepository()
 
 /**
  * Register all system IPC handlers
@@ -29,7 +29,7 @@ export function registerSystemHandlers(): void {
   // system:getSettings - Get application settings
   ipcMain.handle('system:getSettings', async () => {
     try {
-      return settingsCache
+      return await settingsRepo.getAll()
     } catch (error) {
       throw serializeError(error)
     }
@@ -38,9 +38,7 @@ export function registerSystemHandlers(): void {
   // system:updateSettings - Update application settings
   ipcMain.handle('system:updateSettings', async (_event, updates: Partial<Settings>) => {
     try {
-      settingsCache = { ...settingsCache, ...updates }
-      // TODO: Persist to database
-      return settingsCache
+      return await settingsRepo.update(updates)
     } catch (error) {
       throw serializeError(error)
     }
