@@ -7,11 +7,14 @@ import { DevStatus, RuntimeStatus } from '../constants'
 
 /**
  * A Forge project, corresponding to a local directory
+ * Every project is bound to a GitHub repository
  */
 export interface Project {
   id: string
   name: string
   path: string // Absolute path to project directory
+  githubRepo: string | null // GitHub repository name (e.g., "kindle-anki")
+  githubOwner: string | null // GitHub owner/username (e.g., "waynewang")
   createdAt: string // ISO 8601
   archivedAt: string | null // ISO 8601, null if not archived
 }

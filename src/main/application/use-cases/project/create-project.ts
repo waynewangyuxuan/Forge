@@ -93,7 +93,8 @@ export async function createProject(
   )
 
   // 5. Create project in database
-  const project = await projectRepo.create({ name, path })
+  // Note: githubRepo and githubOwner will be set when GitHub integration is added (Section 6)
+  const project = await projectRepo.create({ name, path, githubRepo: null, githubOwner: null })
 
   // 6. Create initial version (v1.0)
   const version = await versionRepo.create({
