@@ -40,6 +40,11 @@ export const ErrorCodes = {
   FILE_NOT_FOUND: 'FILE_NOT_FOUND',
   DATABASE_ERROR: 'DATABASE_ERROR',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
+  // GitHub errors
+  GITHUB_NOT_AUTHENTICATED: 'GITHUB_NOT_AUTHENTICATED',
+  GITHUB_CLI_NOT_FOUND: 'GITHUB_CLI_NOT_FOUND',
+  GITHUB_REPO_EXISTS: 'GITHUB_REPO_EXISTS',
+  GITHUB_OPERATION_FAILED: 'GITHUB_OPERATION_FAILED',
 } as const
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes]
@@ -49,6 +54,7 @@ export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes]
  */
 export const DEFAULT_SETTINGS = {
   projectsLocation: '~/Projects',
+  cloneRoot: '~/Projects', // GitHub clone root directory
   initGit: true,
   autoCommitOnMilestone: true,
   autoPush: false,

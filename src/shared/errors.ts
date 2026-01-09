@@ -124,6 +124,52 @@ export class ClaudeTimeoutError extends ForgeError {
 }
 
 /**
+ * GitHub not authenticated - user needs to login via gh CLI
+ */
+export class GitHubNotAuthenticatedError extends ForgeError {
+  constructor() {
+    super('GitHub authentication required. Please run "gh auth login" or connect via Settings.', ErrorCodes.GITHUB_NOT_AUTHENTICATED)
+    this.name = 'GitHubNotAuthenticatedError'
+  }
+}
+
+/**
+ * GitHub CLI not found - gh CLI not installed
+ */
+export class GitHubCLINotFoundError extends ForgeError {
+  constructor() {
+    super('GitHub CLI (gh) not found. Please install it from https://cli.github.com', ErrorCodes.GITHUB_CLI_NOT_FOUND)
+    this.name = 'GitHubCLINotFoundError'
+  }
+}
+
+/**
+ * GitHub repository already exists
+ */
+export class GitHubRepoExistsError extends ForgeError {
+  public readonly repoName: string
+
+  constructor(repoName: string) {
+    super(`GitHub repository "${repoName}" already exists`, ErrorCodes.GITHUB_REPO_EXISTS)
+    this.name = 'GitHubRepoExistsError'
+    this.repoName = repoName
+  }
+}
+
+/**
+ * GitHub operation failed - generic GitHub API/CLI error
+ */
+export class GitHubOperationError extends ForgeError {
+  public readonly operation: string
+
+  constructor(operation: string, message: string) {
+    super(`GitHub ${operation} failed: ${message}`, ErrorCodes.GITHUB_OPERATION_FAILED)
+    this.name = 'GitHubOperationError'
+    this.operation = operation
+  }
+}
+
+/**
  * Serialize any error for IPC transport
  * Preserves error code and message
  */
