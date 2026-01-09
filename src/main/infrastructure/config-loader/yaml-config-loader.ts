@@ -42,11 +42,27 @@ export interface ExecutionConfig {
 const configCache = new Map<string, unknown>()
 
 /**
+ * Override config directory for testing
+ */
+let configDirOverride: string | null = null
+
+/**
+ * Set a custom config directory (for testing)
+ */
+export function setConfigDir(dir: string | null): void {
+  configDirOverride = dir
+  clearConfigCache()
+}
+
+/**
  * Get the config directory path
  * In development: project root/config
  * In production: app resources/config
  */
 function getConfigDir(): string {
+  if (configDirOverride) {
+    return configDirOverride
+  }
   if (app.isPackaged) {
     return join(process.resourcesPath, 'config')
   }

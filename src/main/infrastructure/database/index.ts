@@ -160,6 +160,30 @@ export function isDatabaseReady(): boolean {
 }
 
 /**
+ * Set a custom database instance (for testing)
+ * WARNING: Only use this in tests!
+ */
+export function setDatabase(database: Database.Database): void {
+  db = database
+}
+
+/**
+ * Create an in-memory database for testing
+ * Returns an initialized database with all tables
+ */
+export function createTestDatabase(): Database.Database {
+  const testDb = new Database(':memory:')
+  testDb.pragma('foreign_keys = ON')
+
+  // Create all tables
+  for (const tableSQL of ALL_TABLES) {
+    testDb.exec(tableSQL)
+  }
+
+  return testDb
+}
+
+/**
  * Get database statistics (for debugging)
  */
 export function getDatabaseStats(): {
