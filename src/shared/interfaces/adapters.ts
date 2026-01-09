@@ -126,3 +126,59 @@ export interface IGitAdapter {
   push(path: string, remote?: string): Promise<void>
   isRepo(path: string): Promise<boolean>
 }
+
+/**
+ * GitHub adapter interface (uses gh CLI)
+ */
+export interface IGitHubAdapter {
+  // CLI status
+  isAvailable(): Promise<boolean>
+
+  // Authentication
+  checkAuth(): Promise<GitHubAuthStatus>
+
+  // Repository operations
+  createRepo(name: string, options?: CreateRepoOptions): Promise<GitHubRepo>
+  cloneRepo(owner: string, repo: string, destPath: string): Promise<void>
+
+  // User info
+  getAuthenticatedUser(): Promise<GitHubUser | null>
+}
+
+/**
+ * GitHub authentication status
+ */
+export interface GitHubAuthStatus {
+  authenticated: boolean
+  user?: GitHubUser
+}
+
+/**
+ * GitHub user info
+ */
+export interface GitHubUser {
+  login: string
+  name: string
+  avatarUrl: string
+}
+
+/**
+ * GitHub repository info
+ */
+export interface GitHubRepo {
+  id: string
+  name: string
+  fullName: string
+  htmlUrl: string
+  cloneUrl: string
+  sshUrl: string
+}
+
+/**
+ * Options for creating a GitHub repository
+ */
+export interface CreateRepoOptions {
+  description?: string
+  private?: boolean
+  autoInit?: boolean
+}
