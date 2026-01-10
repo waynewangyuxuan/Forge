@@ -8,7 +8,9 @@ import Database from 'better-sqlite3'
 import { createTestDatabase, setDatabase, closeDatabase } from '../../src/main/infrastructure/database'
 import { SQLiteProjectRepository } from '../../src/main/infrastructure/repositories/sqlite-project.repo'
 import { SQLiteVersionRepository } from '../../src/main/infrastructure/repositories/sqlite-version.repo'
+import { SQLiteSettingsRepository } from '../../src/main/infrastructure/repositories/sqlite-settings.repo'
 import { DuplicateError, NotFoundError } from '../../src/shared/errors'
+import { DEFAULT_SETTINGS } from '../../src/shared/constants'
 
 // DevStatus and RuntimeStatus are string literal union types
 const DevStatusDrafting = 'drafting'
@@ -369,6 +371,165 @@ describe('SQLiteVersionRepository', () => {
 
       const found = await versionRepo.findById(version.id)
       expect(found).toBeNull()
+    })
+  })
+})
+
+describe('SQLiteSettingsRepository', () => {
+  let db: Database.Database
+  let repo: SQLiteSettingsRepository
+
+  beforeEach(() => {
+    db = createTestDatabase()
+    setDatabase(db)
+    repo = new SQLiteSettingsRepository()
+  })
+
+  afterEach(() => {
+    closeDatabase()
+  })
+
+  describe('getAll', () => {
+    it('should return default settings when no settings are stored', async () => {
+      const settings = await repo.getAll()
+
+      expect(settings).toEqual(DEFAULT_SETTINGS)
+    })
+
+    it('should return merged settings with stored values', async () => {
+      await repo.set('projectsLocation', '/custom/projects')
+
+      const settings = await repo.getAll()
+
+      expect(settings.projectsLocation).toBe('/custom/projects')
+      // Other settings should be defaults
+      expect(settings.cloneRoot).toBe(DEFAULT_SETTINGS.cloneRoot)
+    })
+
+    it('should parse JSON boolean values correctly', async () => {
+      await repo.set('initGit', false)
+
+      const settings = await repo.getAll()
+
+      expect(settings.initGit).toBe(false)
+    })
+
+    it('should handle invalid JSON by treating as string', async () => {
+      // Directly insert non-JSON string
+      db.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)')
+        .run('projectsLocation', '/some/path', new Date().toISOString())
+
+      const settings = await repo.getAll()
+
+      expect(settings.projectsLocation).toBe('/some/path')
+    })
+  })
+
+  describe('update', () => {
+    it('should update single setting', async () => {
+      const result = await repo.update({ projectsLocation: '/new/path' })
+
+      expect(result.projectsLocation).toBe('/new/path')
+    })
+
+    it('should update multiple settings', async () => {
+      const result = await repo.update({
+        projectsLocation: '/custom/path',
+        cloneRoot: '/clone/root',
+      })
+
+      expect(result.projectsLocation).toBe('/custom/path')
+      expect(result.cloneRoot).toBe('/clone/root')
+    })
+
+    it('should preserve existing settings when updating others', async () => {
+      await repo.set('projectsLocation', '/custom/path')
+
+      const result = await repo.update({ cloneRoot: '/new/clone' })
+
+      expect(result.projectsLocation).toBe('/custom/path')
+      expect(result.cloneRoot).toBe('/new/clone')
+    })
+
+    it('should overwrite existing setting', async () => {
+      await repo.set('defaultEditor', 'code')
+
+      const result = await repo.update({ defaultEditor: 'vim' })
+
+      expect(result.defaultEditor).toBe('vim')
+    })
+
+    it('should ignore undefined values', async () => {
+      await repo.set('projectsLocation', '/my/path')
+
+      const result = await repo.update({ projectsLocation: undefined as unknown as string })
+
+      expect(result.projectsLocation).toBe('/my/path')
+    })
+  })
+
+  describe('get', () => {
+    it('should return default value when key not stored', async () => {
+      const projectsLocation = await repo.get('projectsLocation')
+
+      expect(projectsLocation).toBe(DEFAULT_SETTINGS.projectsLocation)
+    })
+
+    it('should return stored value when exists', async () => {
+      await repo.set('projectsLocation', '/stored/path')
+
+      const projectsLocation = await repo.get('projectsLocation')
+
+      expect(projectsLocation).toBe('/stored/path')
+    })
+
+    it('should parse JSON boolean values correctly', async () => {
+      await repo.set('initGit', false)
+
+      const initGit = await repo.get('initGit')
+
+      expect(initGit).toBe(false)
+    })
+
+    it('should handle non-JSON string values', async () => {
+      // Directly insert string value without JSON encoding
+      db.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)')
+        .run('defaultEditor', 'vim', new Date().toISOString())
+
+      const editor = await repo.get('defaultEditor')
+
+      expect(editor).toBe('vim')
+    })
+  })
+
+  describe('set', () => {
+    it('should store string value', async () => {
+      await repo.set('projectsLocation', '/test/path')
+
+      const stored = await repo.get('projectsLocation')
+      expect(stored).toBe('/test/path')
+    })
+
+    it('should store boolean value', async () => {
+      await repo.set('autoPush', true)
+
+      const stored = await repo.get('autoPush')
+      expect(stored).toBe(true)
+    })
+
+    it('should update existing value', async () => {
+      await repo.set('defaultEditor', 'code')
+      await repo.set('defaultEditor', 'vim')
+
+      const stored = await repo.get('defaultEditor')
+      expect(stored).toBe('vim')
+    })
+
+    it('should update updated_at timestamp', async () => {
+      await repo.set('projectsLocation', '/test')
+
+      const row = db.prepare('SELECT updated_at FROM settings WHERE key = ?').get('projectsLocation') as { updated_at: string }
+      expect(row.updated_at).toBeDefined()
     })
   })
 })

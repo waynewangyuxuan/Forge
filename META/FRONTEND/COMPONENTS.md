@@ -611,9 +611,14 @@ interface Run {
 
 ### 4.1 MarkdownEditor
 
-简单的 Markdown 编辑器。
+Markdown 编辑器，使用 CodeMirror 6。
 
-**实现**：textarea + 基础样式（MVP 不用 CodeMirror）
+**实现**：CodeMirror 6 + `@codemirror/lang-markdown`
+
+**依赖**：
+```bash
+npm install @codemirror/view @codemirror/state @codemirror/lang-markdown @codemirror/theme-one-dark
+```
 
 **Props**：
 
@@ -622,15 +627,17 @@ interface MarkdownEditorProps {
   value: string
   onChange: (value: string) => void
   placeholder?: string
-  minHeight?: number
+  minHeight?: number      // default 400
   readOnly?: boolean
+  className?: string
 }
 ```
 
 **样式要点**：
-- 等宽字体
-- 自动增高（根据内容）
-- 行号（可选，MVP 不做）
+- 等宽字体（JetBrains Mono）
+- Markdown 语法高亮
+- 自定义主题匹配 Warm Industrial 设计系统
+- 边框样式与 Input 组件一致（rounded-xl, border-stone-200）
 
 ---
 

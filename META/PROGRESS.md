@@ -259,3 +259,128 @@ Implemented GitHub-first project creation workflow. Every project is now bound t
 - Settings now persist to SQLite database
 
 ---
+
+## 2026-01-09 - M3: Spec 编辑 - Complete
+
+### Summary
+Implemented Spec file editing functionality with CodeMirror-based Markdown editor. Users can now create and edit PRODUCT.md, TECHNICAL.md, and REGULATION.md files through the UI.
+
+### Completed Sections
+
+#### Section 0: Documentation Alignment
+- Updated M3.md to remove FileSystemAdapter (already exists from M2)
+- Updated COMPONENTS.md for CodeMirror usage
+- Updated TODO.md with M3 section breakdown
+- Updated MILESTONES/META.md status
+
+#### Section 1: Shared Layer - IPC Types
+- Added `spec:read` and `spec:save` channels to IPCChannelMap
+- TypeScript compile passes
+
+#### Section 2: Backend - Spec Use Cases
+- Created `read-spec.ts` - reads spec file content by versionId + file type
+- Created `save-spec.ts` - saves spec file content
+- Returns empty string if file doesn't exist (graceful handling)
+
+#### Section 3: Backend - IPC Handler
+- Created `spec.ipc.ts` with `spec:read` and `spec:save` handlers
+- Registered handlers in IPC index
+
+#### Section 4: Frontend - Tabs Component
+- Created reusable `Tabs` primitive component
+- Amber bottom border indicator for active tab
+- Follows design system conventions
+
+#### Section 5: Frontend - Editor Components
+- Installed CodeMirror and react-markdown dependencies
+- Created `MarkdownEditor` with CodeMirror 6 integration
+- Created `MarkdownPreview` with react-markdown
+- Custom theme matching Warm Industrial design system
+
+#### Section 6: Frontend - SpecPage and Hook
+- Created `useUnsavedChanges` hook with React Router blocker + beforeunload
+- Created `SpecPage` with 3 tabs (PRODUCT/TECHNICAL/REGULATION)
+- Edit/preview toggle, manual save functionality
+- Unsaved changes warning on tab switch and navigation
+
+### Commits
+- `7116857` feat(m3): implement Spec editing with CodeMirror editor
+
+### Key Features
+- Three spec files: PRODUCT.md, TECHNICAL.md, REGULATION.md
+- CodeMirror 6 editor with Markdown syntax highlighting
+- Toggle between edit and preview modes
+- Manual save with unsaved changes indicator
+- Navigation protection for unsaved changes
+- Files stored in `{projectRoot}/META/CORE/`
+
+### Tests
+- TypeCheck: ✓
+- Lint: ✓ (pre-existing warnings only)
+- Tests: 62 passing
+
+---
+
+## 2026-01-09 - Test Coverage Improvement - Complete
+
+### Summary
+Increased test coverage from ~77% to 96.84%, exceeding the 95% target. Added comprehensive unit tests across infrastructure, application, stores, and renderer layers.
+
+### New Test Files Created
+
+#### Infrastructure Tests
+- `tests/infrastructure/github.adapter.test.ts` - GitHubAdapter tests
+  - checkAuth: authenticated, not authenticated, command not found, Windows errors
+  - createRepo: URL parsing, private/public repos, description option, error handling
+  - getRepoInfo: edge cases
+- `tests/infrastructure/file-system.adapter.test.ts` - FileSystemAdapter tests
+  - watch: file modifications, cleanup
+- `tests/infrastructure/ipc.test.ts` - IPC handler tests
+
+#### Application Tests
+- `tests/application/use-cases/project/*.test.ts` - Project use case tests
+- `tests/application/use-cases/version/*.test.ts` - Version use case tests
+- `tests/application/use-cases/spec/*.test.ts` - Spec use case tests
+
+#### Store Tests
+- `tests/stores/server.store.test.ts` - ServerStore comprehensive tests
+  - Error handling for all store actions
+  - createVersion with existing versions
+  - setCurrentVersion edge cases
+- `tests/stores/ui.store.test.ts` - Additional tests
+  - openModal with confirmDelete and data
+  - confirmAction without callback
+  - Selector tests
+- `tests/stores/realtime.store.test.ts` - Additional tests
+  - Hook selector tests
+  - Event handler edge cases
+
+#### Renderer Tests
+- `tests/renderer/pages/SettingsPage.test.tsx` - SettingsPage tests
+  - handleSaveCloneRoot: success, error, empty validation
+  - handleBrowse: folder selection, cancellation, error handling
+  - GitHub loading state
+- `tests/renderer/pages/OverviewPage.test.tsx` - OverviewPage tests
+  - Loading states
+  - Different devStatus and runtimeStatus values
+  - handleOpenInEditor error handling
+
+#### Shared Tests
+- `tests/shared/*.test.ts` - Shared utility tests
+
+### Configuration Updates
+- Updated `vitest.config.ts` to exclude non-source files:
+  - META/**
+  - scripts/**
+  - **/demo.*
+
+### Test Setup
+- Created `tests/setup.ts` with test environment configuration
+
+### Coverage Results
+- **Final Coverage: 96.84%** (target: 95%)
+- All tests passing
+- TypeCheck: ✓
+- Lint: ✓
+
+---

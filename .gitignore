@@ -9,8 +9,11 @@ release/
 # IDE
 .idea/
 .vscode/
-.claude/
 *.swp
+
+# Claude Code - ignore local settings, keep commands (skills)
+.claude/*
+!.claude/commands/
 *.swo
 .DS_Store
 

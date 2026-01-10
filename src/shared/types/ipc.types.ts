@@ -358,6 +358,10 @@ export interface IPCChannelMap {
   'version:create': { input: CreateVersionInput; output: Version }
   'version:setActive': { input: VersionSetActiveInput; output: void }
 
+  // Spec
+  'spec:read': { input: SpecReadInput; output: string }
+  'spec:save': { input: SpecSaveInput; output: void }
+
   // System
   'system:getSettings': { input: void; output: Settings }
   'system:updateSettings': { input: Partial<Settings>; output: Settings }
