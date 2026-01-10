@@ -7,6 +7,9 @@ import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '../../primitives/Button'
 
+// Detect macOS for traffic lights padding
+const isMacOS = navigator.platform.toLowerCase().includes('mac')
+
 export const Header: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -14,7 +17,10 @@ export const Header: React.FC = () => {
   const isSettingsPage = location.pathname === '/settings'
 
   return (
-    <header className="h-14 border-b border-[#e5e5e5] bg-white px-4 flex items-center justify-between flex-shrink-0">
+    <header
+      className="h-14 border-b border-[#e5e5e5] bg-white px-4 flex items-center justify-between flex-shrink-0"
+      style={{ paddingLeft: isMacOS ? 80 : undefined }}
+    >
       {/* Logo and Title */}
       <button
         onClick={() => navigate('/projects')}

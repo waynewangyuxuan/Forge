@@ -45,7 +45,7 @@ interface ServerStore {
   fetchProjects: () => Promise<void>
   createProject: (input: CreateProjectInput) => Promise<Project>
   archiveProject: (id: string) => Promise<void>
-  deleteProject: (id: string) => Promise<void>
+  deleteProject: (id: string, options?: { deleteFromGitHub?: boolean; deleteLocalFiles?: boolean }) => Promise<void>
 
   // ========== Version Actions ==========
 
@@ -120,9 +120,13 @@ export const useServerStore = create<ServerStore>((set) => ({
     }
   },
 
-  deleteProject: async (id: string) => {
+  deleteProject: async (id: string, options?: { deleteFromGitHub?: boolean; deleteLocalFiles?: boolean }) => {
     try {
-      await window.api.invoke('project:delete', { id })
+      await window.api.invoke('project:delete', {
+        id,
+        deleteFromGitHub: options?.deleteFromGitHub,
+        deleteLocalFiles: options?.deleteLocalFiles,
+      })
       set((s) => ({
         projects: s.projects.filter((p) => p.id !== id),
       }))

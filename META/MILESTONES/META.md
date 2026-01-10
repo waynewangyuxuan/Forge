@@ -11,7 +11,13 @@ M0: 项目脚手架     ──►  M1: 核心基础设施  ──►  M2: 项目
                                             M2.5: GitHub 集成
                                                     │
                                                     ▼
-M5: Review 流程   ◄──  M4: Scaffold 生成  ◄──  M3: Spec 编辑
+                                              M3: Spec 编辑
+                                                    │
+                                                    ▼
+                                           M3.5: Bug Fixes
+                                                    │
+                                                    ▼
+M5: Review 流程   ◄──────────────────────  M4: Scaffold 生成
         │
         ▼
 M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
@@ -29,6 +35,7 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 | [M2.md](M2.md) | ✅ complete | 项目管理 - Project/Version CRUD |
 | [M2.5.md](M2.5.md) | ✅ complete | GitHub 集成 - GitHub-first 项目创建 |
 | [M3.md](M3.md) | ✅ complete | Spec 编辑 - Markdown 编辑器 (CodeMirror) |
+| M3.5 | ✅ complete | Bug Fixes & Enhancements - Delete项目、UI修复 |
 | [M4.md](M4.md) | pending | Scaffold 生成 - AI 生成 TODO.md |
 | [M5.md](M5.md) | pending | Review 流程 - TODO 审核与 Approve |
 | [M6.md](M6.md) | pending | 代码执行 - 任务逐个执行 |
@@ -45,6 +52,7 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 | M2 | ✅ complete | 2025-01-09 | 2025-01-09 |
 | M2.5 | ✅ complete | 2026-01-09 | 2026-01-09 |
 | M3 | ✅ complete | 2026-01-09 | 2026-01-09 |
+| M3.5 | ✅ complete | 2026-01-09 | 2026-01-09 |
 | M4 | pending | - | - |
 | M5 | pending | - | - |
 | M6 | pending | - | - |

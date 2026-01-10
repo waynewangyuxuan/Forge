@@ -90,10 +90,17 @@ export function registerProjectHandlers(): void {
     }
   })
 
-  // project:delete - Delete a project
+  // project:delete - Delete a project (optionally from GitHub and local filesystem)
   ipcMain.handle('project:delete', async (_event, input: ProjectDeleteInput) => {
     try {
-      await deleteProject({ id: input.id }, { projectRepo })
+      await deleteProject(
+        {
+          id: input.id,
+          deleteFromGitHub: input.deleteFromGitHub,
+          deleteLocalFiles: input.deleteLocalFiles,
+        },
+        { projectRepo, fs, github }
+      )
     } catch (error) {
       throw serializeError(error)
     }

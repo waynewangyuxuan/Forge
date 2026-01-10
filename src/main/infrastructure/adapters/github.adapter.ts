@@ -166,6 +166,30 @@ export class GitHubAdapter implements IGitHubAdapter {
   }
 
   /**
+   * Delete a GitHub repository
+   */
+  async deleteRepo(owner: string, repo: string): Promise<void> {
+    // Ensure gh CLI is available
+    if (!(await this.isAvailable())) {
+      throw new GitHubCLINotFoundError()
+    }
+
+    // Ensure user is authenticated
+    const authStatus = await this.checkAuth()
+    if (!authStatus.authenticated) {
+      throw new GitHubNotAuthenticatedError()
+    }
+
+    try {
+      // gh repo delete with --yes to skip confirmation prompt
+      await execAsync(`gh repo delete ${owner}/${repo} --yes`)
+    } catch (error) {
+      const errorMessage = (error as { stderr?: string }).stderr || ''
+      throw new GitHubOperationError('deleteRepo', errorMessage || 'Failed to delete repository')
+    }
+  }
+
+  /**
    * Get repository info by owner and name
    */
   private async getRepoInfo(owner: string, repo: string): Promise<GitHubRepo> {

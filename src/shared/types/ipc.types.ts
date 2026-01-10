@@ -43,6 +43,8 @@ export interface ProjectArchiveInput {
 
 export interface ProjectDeleteInput {
   id: string
+  deleteFromGitHub?: boolean
+  deleteLocalFiles?: boolean
 }
 
 // ============================================================
