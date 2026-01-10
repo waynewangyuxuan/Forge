@@ -12,7 +12,11 @@ const commandPath = join(process.cwd(), 'node_modules', '.bin', commandName)
 const env = { ...process.env }
 delete env.ELECTRON_RUN_AS_NODE
 
-const child = spawn(commandPath, args, { stdio: 'inherit', env })
+const child = spawn(commandPath, args, {
+  stdio: 'inherit',
+  env,
+  shell: process.platform === 'win32'
+})
 child.on('exit', (code) => process.exit(code ?? 1))
 child.on('error', (err) => {
   console.error(err)
