@@ -18,11 +18,13 @@ export const DeleteProjectModal: React.FC = () => {
   const [deleteFromGitHub, setDeleteFromGitHub] = useState(false)
   const [deleteLocalFiles, setDeleteLocalFiles] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [scopeError, setScopeError] = useState(false)
 
   const handleClose = () => {
     setDeleteFromGitHub(false)
     setDeleteLocalFiles(false)
     setLoading(false)
+    setScopeError(false)
     closeModal('deleteProject')
   }
 
@@ -55,6 +57,11 @@ export const DeleteProjectModal: React.FC = () => {
           type: 'error',
           message: 'GitHub authentication required to delete repository',
         })
+      } else if (err.message?.includes('delete_repo') || err.message?.includes('admin rights')) {
+        // Missing delete_repo scope - show inline error with instructions
+        setScopeError(true)
+        setLoading(false)
+        return // Don't close modal, show instructions
       } else {
         showToast({
           type: 'error',
@@ -134,6 +141,23 @@ export const DeleteProjectModal: React.FC = () => {
             </label>
           </div>
         </div>
+
+        {scopeError && (
+          <div className="rounded-lg bg-red-50 border border-red-200 p-3 space-y-2">
+            <p className="text-sm text-red-800 font-medium">
+              GitHub CLI needs additional permissions to delete repositories.
+            </p>
+            <p className="text-sm text-red-700">
+              Run this command in your terminal:
+            </p>
+            <code className="block bg-red-100 px-2 py-1 rounded text-xs text-red-900 font-mono">
+              gh auth refresh -h github.com -s delete_repo
+            </code>
+            <p className="text-xs text-red-600">
+              Then try again. This only needs to be done once.
+            </p>
+          </div>
+        )}
 
         <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
           <p className="text-sm text-amber-800">
