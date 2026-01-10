@@ -320,3 +320,67 @@ Implemented Spec file editing functionality with CodeMirror-based Markdown edito
 - Tests: 62 passing
 
 ---
+
+## 2026-01-09 - Test Coverage Improvement - Complete
+
+### Summary
+Increased test coverage from ~77% to 96.84%, exceeding the 95% target. Added comprehensive unit tests across infrastructure, application, stores, and renderer layers.
+
+### New Test Files Created
+
+#### Infrastructure Tests
+- `tests/infrastructure/github.adapter.test.ts` - GitHubAdapter tests
+  - checkAuth: authenticated, not authenticated, command not found, Windows errors
+  - createRepo: URL parsing, private/public repos, description option, error handling
+  - getRepoInfo: edge cases
+- `tests/infrastructure/file-system.adapter.test.ts` - FileSystemAdapter tests
+  - watch: file modifications, cleanup
+- `tests/infrastructure/ipc.test.ts` - IPC handler tests
+
+#### Application Tests
+- `tests/application/use-cases/project/*.test.ts` - Project use case tests
+- `tests/application/use-cases/version/*.test.ts` - Version use case tests
+- `tests/application/use-cases/spec/*.test.ts` - Spec use case tests
+
+#### Store Tests
+- `tests/stores/server.store.test.ts` - ServerStore comprehensive tests
+  - Error handling for all store actions
+  - createVersion with existing versions
+  - setCurrentVersion edge cases
+- `tests/stores/ui.store.test.ts` - Additional tests
+  - openModal with confirmDelete and data
+  - confirmAction without callback
+  - Selector tests
+- `tests/stores/realtime.store.test.ts` - Additional tests
+  - Hook selector tests
+  - Event handler edge cases
+
+#### Renderer Tests
+- `tests/renderer/pages/SettingsPage.test.tsx` - SettingsPage tests
+  - handleSaveCloneRoot: success, error, empty validation
+  - handleBrowse: folder selection, cancellation, error handling
+  - GitHub loading state
+- `tests/renderer/pages/OverviewPage.test.tsx` - OverviewPage tests
+  - Loading states
+  - Different devStatus and runtimeStatus values
+  - handleOpenInEditor error handling
+
+#### Shared Tests
+- `tests/shared/*.test.ts` - Shared utility tests
+
+### Configuration Updates
+- Updated `vitest.config.ts` to exclude non-source files:
+  - META/**
+  - scripts/**
+  - **/demo.*
+
+### Test Setup
+- Created `tests/setup.ts` with test environment configuration
+
+### Coverage Results
+- **Final Coverage: 96.84%** (target: 95%)
+- All tests passing
+- TypeCheck: ✓
+- Lint: ✓
+
+---
