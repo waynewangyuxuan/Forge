@@ -226,10 +226,11 @@ application/use-cases/
 │
 ├── project/
 │   ├── create-project.ts         # 创建项目
-│   ├── list-projects.ts          # 获取项目列表
+│   ├── list-projects.ts          # 获取项目列表（含 hasLocalFiles 检查）
 │   ├── get-project.ts            # 获取项目详情
 │   ├── archive-project.ts        # 归档项目
-│   └── delete-project.ts         # 删除项目
+│   ├── delete-project.ts         # 删除项目（支持 GitHub + 本地删除选项）
+│   └── activate-project.ts       # 激活项目（从 GitHub 重新克隆）
 │
 ├── version/
 │   ├── create-version.ts         # 创建新版本 (Iterate)

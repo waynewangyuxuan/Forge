@@ -161,3 +161,5 @@ All tasks completed. See PROGRESS.md for details.
 - [x] P7. Electron app data path utility - Done
 - [ ] P8. Add tests for M2 use cases
 - [ ] P9. Add tests for M2 components (optional)
+- [x] P10. Inactive project state - Show projects without local files as "inactive"/greyed out
+- [x] P11. Re-clone functionality - Allow re-cloning projects from GitHub when local files are missing

@@ -384,3 +384,45 @@ Increased test coverage from ~77% to 96.84%, exceeding the 95% target. Added com
 - Lint: ✓
 
 ---
+
+## 2026-01-10 - IPC Error Handling Fix & DeleteProjectModal Improvements
+
+### Summary
+Fixed a bug where IPC handler rejections caused the DeleteProjectModal UI to get stuck, and improved the UX for GitHub scope errors.
+
+### Problem
+- Some IPC handlers in main process throw errors using `serializeError(error)`
+- When they throw, `window.api.invoke(...)` rejects instead of returning a value
+- `DeleteProjectModal` was written assuming `await deleteProject(...)` always resolves to an `IPCResult`
+- If it rejected, the code never reached the `if (!result.ok)` branch, leaving `loading: true` forever
+
+### Fix (Two-Layer Defense)
+
+#### Layer 1: Store Normalization ([server.store.ts:127-141](src/renderer/stores/server.store.ts#L127-L141))
+- Wrapped IPC invoke in try/catch
+- Convert Promise rejections into `{ ok: false, error: ipcError }` IPCResult
+- Now `deleteProject()` always returns an `IPCResult`, matching its contract
+
+#### Layer 2: Component Resilience ([DeleteProjectModal.tsx:105-112](src/renderer/components/composites/DeleteProjectModal/DeleteProjectModal.tsx#L105-L112))
+- Added try/catch around the entire operation
+- Added `finally` block to always clear loading state
+- Ensures UI never gets stuck regardless of how errors occur
+
+### UX Improvements
+
+#### Scope Error Recovery Flow ([DeleteProjectModal.tsx:116-150](src/renderer/components/composites/DeleteProjectModal/DeleteProjectModal.tsx#L116-L150))
+- Added `handleDeleteLocalOnly` function as fallback when GitHub deletion fails
+- When `GITHUB_MISSING_SCOPE` error occurs, modal shows alternative "Delete Local Files Only" button
+- User can proceed without granting `delete_repo` scope by keeping GitHub repo but removing local files
+- Project becomes "Inactive" in Forge, can be re-cloned later
+
+#### Improved Warning Messages ([DeleteProjectModal.tsx:265-287](src/renderer/components/composites/DeleteProjectModal/DeleteProjectModal.tsx#L265-L287))
+- Clearer messaging based on deletion options selected
+- GitHub + local deletion: explicit "permanent and cannot be undone" warning
+- Local-only deletion: explains project becomes "Inactive" in Forge
+- Remove from Forge only: explains files are preserved
+
+### Key Insight
+When frontend code expects `IPCResult<T>`, the store layer should normalize IPC rejections into the same shape, providing a consistent contract for UI components.
+
+---

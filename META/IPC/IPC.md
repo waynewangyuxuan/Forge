@@ -270,6 +270,61 @@ try {
 | `FILE_NOT_FOUND` | 文件不存在 |
 | `INTERNAL_ERROR` | 内部错误 |
 
+### 4.4 前端 Store 层错误处理
+
+IPC handlers 可能 throw 错误（Promise rejection），而不是返回 `IPCResult`。为保证 UI 一致性，Store 层应将 rejection 转换为 `IPCResult`：
+
+```typescript
+// renderer/stores/server.store.ts
+deleteProject: async (id: string, options?: DeleteOptions) => {
+  let result: IPCResult<ProjectDeleteOutput>
+
+  try {
+    result = await invokeTyped('project:delete', { id, ...options })
+  } catch (error) {
+    // 将 rejection 转换为 IPCResult
+    const ipcError: IPCError = isSerializedError(error)
+      ? (error as IPCError)
+      : (serializeError(error) as IPCError)
+    return { ok: false, error: ipcError }
+  }
+
+  if (!result.ok) {
+    return result
+  }
+
+  // 成功时更新状态...
+  return result
+}
+```
+
+UI 组件使用时，应加 `finally` 清理状态：
+
+```typescript
+// Component
+const handleDelete = async () => {
+  setLoading(true)
+  try {
+    const result = await deleteProject(id)
+    if (!result.ok) {
+      showError(result.error.message)
+      return
+    }
+    // 成功处理...
+  } catch (error) {
+    // 兜底：store 层已处理，此处理论不会触发
+    showError('Unexpected error')
+  } finally {
+    setLoading(false)  // 始终清理 loading 状态
+  }
+}
+```
+
+**要点：**
+- Store 是 IPC 与 UI 之间的边界，负责统一错误格式
+- 组件用 `finally` 确保 UI 状态始终被清理
+- 两层防护，即使 store 处理有遗漏，UI 也不会卡住
+
 ---
 
 ## 五、Preload 暴露
