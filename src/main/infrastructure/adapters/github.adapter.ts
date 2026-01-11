@@ -17,6 +17,8 @@ import {
   GitHubNotAuthenticatedError,
   GitHubOperationError,
   GitHubRepoExistsError,
+  GitHubMissingScopeError,
+  GitHubRepoNotFoundError,
 } from '@shared/errors'
 
 const execAsync = promisify(exec)
@@ -184,8 +186,28 @@ export class GitHubAdapter implements IGitHubAdapter {
       // gh repo delete with --yes to skip confirmation prompt
       await execAsync(`gh repo delete ${owner}/${repo} --yes`)
     } catch (error) {
-      const errorMessage = (error as { stderr?: string }).stderr || ''
-      throw new GitHubOperationError('deleteRepo', errorMessage || 'Failed to delete repository')
+      const stderr = (error as { stderr?: string }).stderr || ''
+
+      // Detect missing delete_repo scope (permission denied)
+      if (
+        stderr.includes('delete_repo') ||
+        stderr.includes('403') ||
+        stderr.includes('admin rights') ||
+        stderr.includes('must have admin rights')
+      ) {
+        throw new GitHubMissingScopeError('delete_repo')
+      }
+
+      // Detect repo not found (already deleted - idempotent case)
+      if (
+        stderr.includes('Could not resolve') ||
+        stderr.includes('not found') ||
+        stderr.includes('Not Found')
+      ) {
+        throw new GitHubRepoNotFoundError(owner, repo)
+      }
+
+      throw new GitHubOperationError('deleteRepo', stderr || 'Failed to delete repository')
     }
   }
 

@@ -1,11 +1,19 @@
 /**
  * Delete Project Use Case
  * Permanently deletes a project from the database, and optionally from GitHub and local filesystem
+ *
+ * Outcomes:
+ * - 'deleted': Full delete (DB + GitHub + local files)
+ * - 'deactivated': Local files removed only (project remains in DB as inactive)
+ * - 'removed': Removed from Forge only (DB deleted, files/GitHub preserved)
  */
 
+import { Project } from '@shared/types/project.types'
 import { IProjectRepository } from '@shared/interfaces/repositories'
 import { IFileSystemAdapter, IGitHubAdapter } from '@shared/interfaces/adapters'
-import { ValidationError, NotFoundError } from '@shared/errors'
+import { ValidationError, NotFoundError, GitHubRepoNotFoundError } from '@shared/errors'
+import { WarningCodes } from '@shared/constants'
+import type { IPCWarning, DeleteOutcome } from '@shared/types/ipc.types'
 
 export interface DeleteProjectDeps {
   projectRepo: IProjectRepository
@@ -19,23 +27,38 @@ export interface DeleteProjectInput {
   deleteLocalFiles?: boolean
 }
 
+export interface DeleteProjectOutput {
+  outcome: DeleteOutcome
+  project?: Project
+  warnings?: IPCWarning[]
+}
+
 /**
- * Permanently delete a project
+ * Delete a project with explicit outcome
  *
- * This removes the project and all related data (versions, executions, etc.)
- * from the database via cascade delete.
- *
- * Optional: Also deletes from GitHub and/or local filesystem.
+ * Returns structured result indicating what happened:
+ * - 'deleted': Full delete (DB + optional GitHub/local)
+ * - 'deactivated': Local files only (project stays in DB, marked inactive)
+ * - 'removed': Remove from Forge only (DB deleted, files/GitHub preserved)
  */
 export async function deleteProject(
   input: DeleteProjectInput,
   deps: DeleteProjectDeps
-): Promise<void> {
+): Promise<DeleteProjectOutput> {
   const { projectRepo, fs, github } = deps
+  const warnings: IPCWarning[] = []
 
   // Validate input
-  if (!input.id || input.id.trim() === '') {
+  if (!input.id?.trim()) {
     throw new ValidationError('Project ID is required', 'id')
+  }
+
+  // Invariant: deleteFromGitHub implies deleteLocalFiles
+  if (input.deleteFromGitHub && !input.deleteLocalFiles) {
+    throw new ValidationError(
+      'Deleting from GitHub requires also deleting local files',
+      'deleteLocalFiles'
+    )
   }
 
   // Check project exists
@@ -44,15 +67,20 @@ export async function deleteProject(
     throw new NotFoundError('Project', input.id)
   }
 
-  // Delete from GitHub if requested
+  // Delete from GitHub if requested (fails fast on error, except for "already deleted")
   if (input.deleteFromGitHub && github && project.githubOwner && project.githubRepo) {
     try {
       await github.deleteRepo(project.githubOwner, project.githubRepo)
     } catch (error) {
-      // Log error but continue with deletion
-      console.error('Failed to delete GitHub repository:', error)
-      // Re-throw if it's a critical error (not authenticated, etc.)
-      if ((error as { code?: string }).code === 'GITHUB_NOT_AUTHENTICATED') {
+      // Idempotency: "already deleted" is success + warning
+      if (error instanceof GitHubRepoNotFoundError) {
+        warnings.push({
+          code: WarningCodes.GITHUB_ALREADY_DELETED,
+          message: 'GitHub repository was already deleted',
+          details: { owner: project.githubOwner, repo: project.githubRepo },
+        })
+      } else {
+        // Re-throw scope errors and other failures
         throw error
       }
     }
@@ -61,13 +89,41 @@ export async function deleteProject(
   // Delete local files if requested
   if (input.deleteLocalFiles && fs && project.path) {
     try {
-      await fs.remove(project.path)
+      const exists = await fs.exists(project.path)
+      if (exists) {
+        await fs.remove(project.path)
+      } else {
+        warnings.push({
+          code: WarningCodes.LOCAL_ALREADY_MISSING,
+          message: 'Local files were already missing',
+          details: { path: project.path },
+        })
+      }
     } catch (error) {
-      // Log error but continue with deletion
-      console.error('Failed to delete local files:', error)
+      // Local delete failure is a warning, not an error
+      warnings.push({
+        code: WarningCodes.LOCAL_DELETE_FAILED,
+        message: `Failed to delete local files: ${(error as Error).message}`,
+        details: { path: project.path },
+      })
     }
   }
 
-  // Delete the project from database (cascade handles versions, executions, etc.)
+  // Determine outcome and apply changes
+  if (input.deleteLocalFiles && !input.deleteFromGitHub) {
+    // Deactivate: keep in DB, local files removed
+    // hasLocalFiles is computed at list time, so return updated project
+    return {
+      outcome: 'deactivated',
+      project: { ...project, hasLocalFiles: false },
+      warnings: warnings.length > 0 ? warnings : undefined,
+    }
+  }
+
+  // Full delete or remove from Forge - delete from database
   await projectRepo.delete(input.id)
+  return {
+    outcome: input.deleteFromGitHub ? 'deleted' : 'removed',
+    warnings: warnings.length > 0 ? warnings : undefined,
+  }
 }

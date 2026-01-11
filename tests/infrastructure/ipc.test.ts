@@ -208,7 +208,9 @@ describe('IPC Handlers', () => {
     })
 
     it('should handle project:delete', async () => {
-      await expect(invokeHandler('project:delete', { id: projectId })).resolves.toBeUndefined()
+      const result = await invokeHandler('project:delete', { id: projectId })
+      expect(result.ok).toBe(true)
+      expect(result.data.outcome).toBe('removed')
     })
   })
 

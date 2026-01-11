@@ -16,12 +16,16 @@ import {
   getProject,
   archiveProject,
   deleteProject,
+  activateProject,
 } from '../../application/use-cases/project'
 import type {
   ProjectListInput,
   ProjectGetInput,
   ProjectArchiveInput,
   ProjectDeleteInput,
+  ProjectActivateInput,
+  IPCResult,
+  ProjectDeleteOutput,
 } from '@shared/types/ipc.types'
 import type { CreateProjectInput } from '@shared/types/project.types'
 
@@ -36,12 +40,12 @@ const github = getGitHubAdapter()
  * Register all project IPC handlers
  */
 export function registerProjectHandlers(): void {
-  // project:list - Get all projects
+  // project:list - Get all projects (with hasLocalFiles status)
   ipcMain.handle('project:list', async (_event, input: ProjectListInput) => {
     try {
       return await listProjects(
         { includeArchived: input?.includeArchived },
-        { projectRepo }
+        { projectRepo, fs }
       )
     } catch (error) {
       throw serializeError(error)
@@ -91,14 +95,28 @@ export function registerProjectHandlers(): void {
   })
 
   // project:delete - Delete a project (optionally from GitHub and local filesystem)
-  ipcMain.handle('project:delete', async (_event, input: ProjectDeleteInput) => {
+  // Returns IPCResult envelope instead of throwing for reliable error handling
+  ipcMain.handle('project:delete', async (_event, input: ProjectDeleteInput): Promise<IPCResult<ProjectDeleteOutput>> => {
     try {
-      await deleteProject(
+      const data = await deleteProject(
         {
           id: input.id,
           deleteFromGitHub: input.deleteFromGitHub,
           deleteLocalFiles: input.deleteLocalFiles,
         },
+        { projectRepo, fs, github }
+      )
+      return { ok: true, data }
+    } catch (error) {
+      return { ok: false, error: serializeError(error) }
+    }
+  })
+
+  // project:activate - Clone project from GitHub when local files don't exist
+  ipcMain.handle('project:activate', async (_event, input: ProjectActivateInput) => {
+    try {
+      return await activateProject(
+        { id: input.id },
         { projectRepo, fs, github }
       )
     } catch (error) {

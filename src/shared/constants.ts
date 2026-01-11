@@ -45,9 +45,22 @@ export const ErrorCodes = {
   GITHUB_CLI_NOT_FOUND: 'GITHUB_CLI_NOT_FOUND',
   GITHUB_REPO_EXISTS: 'GITHUB_REPO_EXISTS',
   GITHUB_OPERATION_FAILED: 'GITHUB_OPERATION_FAILED',
+  GITHUB_MISSING_SCOPE: 'GITHUB_MISSING_SCOPE',
+  GITHUB_REPO_NOT_FOUND: 'GITHUB_REPO_NOT_FOUND',
 } as const
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes]
+
+/**
+ * Warning codes for non-fatal issues in operations
+ */
+export const WarningCodes = {
+  LOCAL_ALREADY_MISSING: 'LOCAL_ALREADY_MISSING',
+  LOCAL_DELETE_FAILED: 'LOCAL_DELETE_FAILED',
+  GITHUB_ALREADY_DELETED: 'GITHUB_ALREADY_DELETED',
+} as const
+
+export type WarningCode = (typeof WarningCodes)[keyof typeof WarningCodes]
 
 /**
  * Default application settings

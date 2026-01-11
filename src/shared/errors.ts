@@ -170,12 +170,76 @@ export class GitHubOperationError extends ForgeError {
 }
 
 /**
- * Serialize any error for IPC transport
- * Preserves error code and message
+ * GitHub CLI missing required scope (e.g., delete_repo)
  */
-export function serializeError(error: unknown): { message: string; code: ErrorCode; name: string } {
+export class GitHubMissingScopeError extends ForgeError {
+  public readonly scope: string
+
+  constructor(scope: string) {
+    super(
+      `GitHub CLI is missing the "${scope}" scope. Run: gh auth refresh -h github.com -s ${scope}`,
+      ErrorCodes.GITHUB_MISSING_SCOPE
+    )
+    this.name = 'GitHubMissingScopeError'
+    this.scope = scope
+  }
+
+  toJSON(): { message: string; code: ErrorCode; name: string; details: Record<string, unknown> } {
+    return {
+      ...super.toJSON(),
+      details: { scope: this.scope },
+    }
+  }
+}
+
+/**
+ * GitHub repository not found (may have been deleted already)
+ */
+export class GitHubRepoNotFoundError extends ForgeError {
+  public readonly owner: string
+  public readonly repo: string
+
+  constructor(owner: string, repo: string) {
+    super(
+      `GitHub repository "${owner}/${repo}" not found`,
+      ErrorCodes.GITHUB_REPO_NOT_FOUND
+    )
+    this.name = 'GitHubRepoNotFoundError'
+    this.owner = owner
+    this.repo = repo
+  }
+
+  toJSON(): { message: string; code: ErrorCode; name: string; details: Record<string, unknown> } {
+    return {
+      ...super.toJSON(),
+      details: { owner: this.owner, repo: this.repo },
+    }
+  }
+}
+
+/**
+ * Serialized error shape for IPC transport
+ */
+export interface SerializedError {
+  message: string
+  code: ErrorCode
+  name: string
+  details?: Record<string, unknown>
+}
+
+/**
+ * Serialize any error for IPC transport
+ * Preserves error code, message, and details
+ */
+export function serializeError(error: unknown): SerializedError {
   if (error instanceof ForgeError) {
-    return error.toJSON()
+    const json = error.toJSON()
+    return {
+      code: json.code,
+      message: json.message,
+      name: json.name,
+      details: 'details' in json ? (json as { details?: Record<string, unknown> }).details : undefined,
+    }
   }
 
   if (error instanceof Error) {
