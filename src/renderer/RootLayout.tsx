@@ -7,6 +7,7 @@ import React from 'react'
 import { Outlet } from 'react-router-dom'
 import { Header } from './components/layout/Header'
 import { CreateProjectModal } from './components/composites/CreateProjectModal'
+import { DeleteProjectModal } from './components/composites/DeleteProjectModal'
 
 export const RootLayout: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ export const RootLayout: React.FC = () => {
 
       {/* Global Modals */}
       <CreateProjectModal />
+      <DeleteProjectModal />
     </div>
   )
 }

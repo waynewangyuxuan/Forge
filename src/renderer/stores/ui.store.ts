@@ -12,6 +12,7 @@ export type ModalName =
   | 'createProject'
   | 'createVersion'
   | 'confirmDelete'
+  | 'deleteProject'
   | 'runtimeConfig'
   | 'addCredential'
   | 'settings'
@@ -27,12 +28,23 @@ interface ConfirmState {
 }
 
 /**
+ * Delete project modal state
+ */
+interface DeleteProjectState {
+  open: boolean
+  projectId?: string
+  projectName?: string
+  hasGitHub?: boolean
+}
+
+/**
  * Modal states for each modal type
  */
 interface ModalsState {
   createProject: boolean
   createVersion: boolean
   confirmDelete: ConfirmState
+  deleteProject: DeleteProjectState
   runtimeConfig: boolean
   addCredential: boolean
   settings: boolean
@@ -104,6 +116,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
     createProject: false,
     createVersion: false,
     confirmDelete: { open: false },
+    deleteProject: { open: false },
     runtimeConfig: false,
     addCredential: false,
     settings: false,
@@ -129,10 +142,23 @@ export const useUIStore = create<UIStore>((set, get) => ({
           },
         }
       }
+      if (name === 'deleteProject' && data) {
+        return {
+          modals: {
+            ...s.modals,
+            deleteProject: {
+              open: true,
+              projectId: data.projectId as string,
+              projectName: data.projectName as string,
+              hasGitHub: data.hasGitHub as boolean,
+            },
+          },
+        }
+      }
       return {
         modals: {
           ...s.modals,
-          [name]: name === 'confirmDelete' ? { open: true, ...data } : true,
+          [name]: name === 'confirmDelete' || name === 'deleteProject' ? { open: true, ...data } : true,
         },
       }
     })
@@ -142,7 +168,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
     set((s) => ({
       modals: {
         ...s.modals,
-        [name]: name === 'confirmDelete' ? { open: false } : false,
+        [name]: name === 'confirmDelete' || name === 'deleteProject' ? { open: false } : false,
       },
     }))
   },
@@ -244,6 +270,13 @@ export function useModalOpen(name: ModalName): boolean {
  */
 export function useConfirmDialog(): ConfirmState {
   return useUIStore((s) => s.modals.confirmDelete)
+}
+
+/**
+ * Hook to get delete project modal state
+ */
+export function useDeleteProjectModal(): DeleteProjectState {
+  return useUIStore((s) => s.modals.deleteProject)
 }
 
 /**

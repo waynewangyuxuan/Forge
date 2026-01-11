@@ -6,6 +6,9 @@
 import { create } from 'zustand'
 import type { Project, Version, CreateProjectInput, CreateVersionInput } from '@shared/types/project.types'
 import type { Credential, AddCredentialInput, Settings } from '@shared/types/runtime.types'
+import type { IPCError, IPCResult, ProjectDeleteOutput } from '@shared/types/ipc.types'
+import { invokeTyped } from '../lib/ipc'
+import { isSerializedError, serializeError } from '@shared/errors'
 
 /**
  * Loading states for different data types
@@ -45,7 +48,8 @@ interface ServerStore {
   fetchProjects: () => Promise<void>
   createProject: (input: CreateProjectInput) => Promise<Project>
   archiveProject: (id: string) => Promise<void>
-  deleteProject: (id: string) => Promise<void>
+  deleteProject: (id: string, options?: { deleteFromGitHub?: boolean; deleteLocalFiles?: boolean }) => Promise<IPCResult<ProjectDeleteOutput>>
+  activateProject: (id: string) => Promise<Project>
 
   // ========== Version Actions ==========
 
@@ -120,14 +124,61 @@ export const useServerStore = create<ServerStore>((set) => ({
     }
   },
 
-  deleteProject: async (id: string) => {
+  deleteProject: async (id: string, options?: { deleteFromGitHub?: boolean; deleteLocalFiles?: boolean }) => {
+    let result: IPCResult<ProjectDeleteOutput>
+
     try {
-      await window.api.invoke('project:delete', { id })
-      set((s) => ({
-        projects: s.projects.filter((p) => p.id !== id),
-      }))
+      result = await invokeTyped('project:delete', {
+        id,
+        deleteFromGitHub: options?.deleteFromGitHub,
+        deleteLocalFiles: options?.deleteLocalFiles,
+      })
     } catch (error) {
-      console.error('Failed to delete project:', error)
+      const ipcError: IPCError = isSerializedError(error)
+        ? (error as IPCError)
+        : (serializeError(error) as IPCError)
+      return { ok: false, error: ipcError }
+    }
+
+    // Don't update state if operation failed
+    if (!result.ok) {
+      return result
+    }
+
+    // Apply state changes based on outcome
+    switch (result.data.outcome) {
+      case 'deleted':
+      case 'removed':
+        // Remove from state
+        set((s) => ({
+          projects: s.projects.filter((p) => p.id !== id),
+        }))
+        break
+      case 'deactivated':
+        // Update with returned project (marked as inactive)
+        if (result.data.project) {
+          set((s) => ({
+            projects: s.projects.map((p) =>
+              p.id === id ? result.data.project! : p
+            ),
+          }))
+        }
+        break
+    }
+
+    return result
+  },
+
+  activateProject: async (id: string) => {
+    try {
+      const project = (await window.api.invoke('project:activate', { id })) as Project
+      // Update the project in the list with new hasLocalFiles status
+      set((s) => ({
+        projects: s.projects.map((p) => (p.id === id ? project : p)),
+      }))
+      return project
+    } catch (error) {
+      console.error('Failed to activate project:', error)
       throw error
     }
   },

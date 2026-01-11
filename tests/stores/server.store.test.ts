@@ -108,13 +108,42 @@ describe('useServerStore', () => {
   })
 
   describe('deleteProject', () => {
-    it('should delete project and remove from store', async () => {
+    it('should delete project and remove from store on removed outcome', async () => {
       useServerStore.setState({ projects: [mockProject] })
-      mockApi.invoke.mockResolvedValue(undefined)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: { outcome: 'removed' } })
 
-      await useServerStore.getState().deleteProject('proj-123')
+      const result = await useServerStore.getState().deleteProject('proj-123')
 
+      expect(result.ok).toBe(true)
       expect(useServerStore.getState().projects).toHaveLength(0)
+    })
+
+    it('should deactivate project (mark hasLocalFiles=false) on deactivated outcome', async () => {
+      useServerStore.setState({ projects: [mockProject] })
+      const updatedProject = { ...mockProject, hasLocalFiles: false }
+      mockApi.invoke.mockResolvedValue({
+        ok: true,
+        data: { outcome: 'deactivated', project: updatedProject },
+      })
+
+      const result = await useServerStore.getState().deleteProject('proj-123', { deleteLocalFiles: true })
+
+      expect(result.ok).toBe(true)
+      expect(useServerStore.getState().projects).toHaveLength(1)
+      expect(useServerStore.getState().projects[0].hasLocalFiles).toBe(false)
+    })
+
+    it('should not modify state on error result', async () => {
+      useServerStore.setState({ projects: [mockProject] })
+      mockApi.invoke.mockResolvedValue({
+        ok: false,
+        error: { code: 'GITHUB_MISSING_SCOPE', message: 'Missing scope', name: 'GitHubMissingScopeError' },
+      })
+
+      const result = await useServerStore.getState().deleteProject('proj-123', { deleteFromGitHub: true, deleteLocalFiles: true })
+
+      expect(result.ok).toBe(false)
+      expect(useServerStore.getState().projects).toHaveLength(1) // Project still there
     })
   })
 
@@ -321,12 +350,18 @@ describe('error handling', () => {
     ).rejects.toThrow('Archive failed')
   })
 
-  it('deleteProject should throw error on failure', async () => {
-    mockApi.invoke.mockRejectedValue(new Error('Delete failed'))
+  it('deleteProject should return error result on failure', async () => {
+    mockApi.invoke.mockResolvedValue({
+      ok: false,
+      error: { code: 'UNKNOWN', message: 'Delete failed', name: 'Error' },
+    })
 
-    await expect(
-      useServerStore.getState().deleteProject('proj-123')
-    ).rejects.toThrow('Delete failed')
+    const result = await useServerStore.getState().deleteProject('proj-123')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.message).toBe('Delete failed')
+    }
   })
 
   it('fetchVersions should throw error on failure', async () => {

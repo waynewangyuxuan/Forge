@@ -214,22 +214,32 @@ describe('deleteProject', () => {
   })
 
   describe('deletion', () => {
-    it('should delete a project', async () => {
+    it('should delete a project and return removed outcome', async () => {
       vi.mocked(deps.projectRepo.findById).mockResolvedValue(mockProject)
       vi.mocked(deps.projectRepo.delete).mockResolvedValue(undefined)
 
-      await deleteProject({ id: 'proj-123' }, deps)
+      const result = await deleteProject({ id: 'proj-123' }, deps)
 
       expect(deps.projectRepo.delete).toHaveBeenCalledWith('proj-123')
+      expect(result.outcome).toBe('removed')
     })
 
-    it('should delete an archived project', async () => {
+    it('should delete an archived project and return removed outcome', async () => {
       vi.mocked(deps.projectRepo.findById).mockResolvedValue(mockArchivedProject)
       vi.mocked(deps.projectRepo.delete).mockResolvedValue(undefined)
 
-      await deleteProject({ id: 'proj-456' }, deps)
+      const result = await deleteProject({ id: 'proj-456' }, deps)
 
       expect(deps.projectRepo.delete).toHaveBeenCalledWith('proj-456')
+      expect(result.outcome).toBe('removed')
+    })
+  })
+
+  describe('invariant enforcement', () => {
+    it('should throw ValidationError when deleteFromGitHub is true but deleteLocalFiles is false', async () => {
+      await expect(
+        deleteProject({ id: 'proj-123', deleteFromGitHub: true, deleteLocalFiles: false }, deps)
+      ).rejects.toThrow(ValidationError)
     })
   })
 })

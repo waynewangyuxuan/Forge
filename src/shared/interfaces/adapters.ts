@@ -140,6 +140,7 @@ export interface IGitHubAdapter {
   // Repository operations
   createRepo(name: string, options?: CreateRepoOptions): Promise<GitHubRepo>
   cloneRepo(owner: string, repo: string, destPath: string): Promise<void>
+  deleteRepo(owner: string, repo: string): Promise<void>
 
   // User info
   getAuthenticatedUser(): Promise<GitHubUser | null>

@@ -20,6 +20,61 @@ import {
   GitHubRepo,
   CreateRepoOptions,
 } from './github.types'
+import { ErrorCode, WarningCode } from '../constants'
+
+// ============================================================
+// IPC Result Envelope Types
+// ============================================================
+
+/**
+ * Serialized error for IPC transport
+ * Contains structured error information that survives Electron IPC serialization
+ */
+export interface IPCError {
+  code: ErrorCode
+  message: string
+  name: string
+  details?: Record<string, unknown>  // e.g., { scope: 'delete_repo' }
+}
+
+/**
+ * Structured warning for non-fatal issues
+ * Used instead of freeform strings for consistent UI handling
+ */
+export interface IPCWarning {
+  code: WarningCode
+  message: string
+  details?: Record<string, unknown>
+}
+
+/**
+ * Result envelope - IPC handlers should return this instead of throwing
+ * This ensures error codes and details survive Electron IPC serialization
+ */
+export type IPCResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: IPCError }
+
+// ============================================================
+// Delete Project Types
+// ============================================================
+
+/**
+ * Delete outcome - what actually happened
+ */
+export type DeleteOutcome =
+  | 'deleted'     // Full delete: DB + optional GitHub/local
+  | 'deactivated' // Local files only: project remains, marked inactive
+  | 'removed'     // Remove from Forge only: DB deleted, files/GitHub preserved
+
+/**
+ * Delete result - returned by project:delete
+ */
+export interface ProjectDeleteOutput {
+  outcome: DeleteOutcome
+  project?: Project  // For 'deactivated' - the updated project
+  warnings?: IPCWarning[]
+}
 
 // Note: These types will be used when implementing additional IPC channels:
 // - Execution, ExecutionPlan, ExecutionProgress from './execution.types'
@@ -42,6 +97,12 @@ export interface ProjectArchiveInput {
 }
 
 export interface ProjectDeleteInput {
+  id: string
+  deleteFromGitHub?: boolean
+  deleteLocalFiles?: boolean
+}
+
+export interface ProjectActivateInput {
   id: string
 }
 
@@ -350,7 +411,8 @@ export interface IPCChannelMap {
   'project:create': { input: CreateProjectInput; output: Project }
   'project:get': { input: ProjectGetInput; output: Project | null }
   'project:archive': { input: ProjectArchiveInput; output: void }
-  'project:delete': { input: ProjectDeleteInput; output: void }
+  'project:delete': { input: ProjectDeleteInput; output: IPCResult<ProjectDeleteOutput> }
+  'project:activate': { input: ProjectActivateInput; output: Project }
 
   // Version
   'version:list': { input: VersionListInput; output: Version[] }

@@ -130,6 +130,27 @@ All tasks completed. See PROGRESS.md for details.
 
 ---
 
+## M3.5: Bug Fixes & Enhancements (COMPLETE)
+
+### Section 1: Delete Project Feature (GitHub + Local)
+- [x] 1.1 Add `deleteRepo` method to GitHubAdapter (uses `gh repo delete`)
+- [x] 1.2 Update `delete-project.ts` use case (deletes from DB, GitHub, and local)
+- [x] 1.3 Update `project:delete` IPC handler with options `{ deleteFromGitHub, deleteLocalFiles }`
+- [x] 1.4 Create `DeleteProjectModal` component with checkboxes for deletion options
+- [x] 1.5 Update `ProjectCard` to use new delete modal (added delete button)
+- [x] 1.6 Update `server.store.ts` deleteProject action with options
+
+### Section 2: Fix macOS Window Buttons Overlap (Issue #4)
+- [x] 2.1 Add left padding to Header component for macOS traffic lights (80px)
+- [x] 2.2 Use `navigator.platform` to detect macOS in renderer
+
+### Section 3: Fix GitHub Avatar Not Displaying (Issue #5)
+- [x] 3.1 Fixed CSP - Added `img-src` directive to allow GitHub avatar URLs
+- [x] 3.2 Added fallback avatar (initials) when avatar fails to load
+- [x] 3.3 Added `onError` handler to gracefully handle image load failures
+
+---
+
 ### Potential Tasks (discovered during M1/M2)
 - [x] P1. TypeScript path aliases setup (`@shared`) - Done
 - [x] P2. Vitest configuration for main process tests - Done
@@ -140,3 +161,5 @@ All tasks completed. See PROGRESS.md for details.
 - [x] P7. Electron app data path utility - Done
 - [ ] P8. Add tests for M2 use cases
 - [ ] P9. Add tests for M2 components (optional)
+- [x] P10. Inactive project state - Show projects without local files as "inactive"/greyed out
+- [x] P11. Re-clone functionality - Allow re-cloning projects from GitHub when local files are missing

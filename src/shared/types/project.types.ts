@@ -17,6 +17,7 @@ export interface Project {
   githubOwner: string | null // GitHub owner/username (e.g., "waynewang")
   createdAt: string // ISO 8601
   archivedAt: string | null // ISO 8601, null if not archived
+  hasLocalFiles?: boolean // Whether local files exist at path (computed at runtime)
 }
 
 /**

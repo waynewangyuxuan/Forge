@@ -3,7 +3,7 @@
  * Application settings with GitHub connection and clone root configuration
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components/primitives/Button'
 import { Input } from '../../components/primitives/Input'
@@ -20,6 +20,16 @@ export const SettingsPage: React.FC = () => {
   const [cloneRoot, setCloneRoot] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [avatarError, setAvatarError] = useState(false)
+
+  // Reset avatar error when user changes
+  useEffect(() => {
+    setAvatarError(false)
+  }, [github.user?.avatarUrl])
+
+  const handleAvatarError = useCallback(() => {
+    setAvatarError(true)
+  }, [])
 
   // Load settings on mount
   useEffect(() => {
@@ -161,12 +171,17 @@ export const SettingsPage: React.FC = () => {
               ) : (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {github.user?.avatarUrl && (
+                    {github.user?.avatarUrl && !avatarError ? (
                       <img
                         src={github.user.avatarUrl}
                         alt={github.user.login}
                         className="w-10 h-10 rounded-full"
+                        onError={handleAvatarError}
                       />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-medium">
+                        {github.user?.login?.charAt(0).toUpperCase() || 'G'}
+                      </div>
                     )}
                     <div>
                       <div className="font-medium text-stone-900">

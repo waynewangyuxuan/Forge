@@ -5,3 +5,4 @@
 
 export { ProjectCard, type ProjectCardProps } from './ProjectCard'
 export { CreateProjectModal } from './CreateProjectModal'
+export { DeleteProjectModal } from './DeleteProjectModal'
