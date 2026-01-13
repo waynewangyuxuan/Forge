@@ -56,7 +56,7 @@ describe('useServerStore', () => {
 
   describe('fetchProjects', () => {
     it('should fetch and store projects', async () => {
-      mockApi.invoke.mockResolvedValue([mockProject])
+      mockApi.invoke.mockResolvedValue({ ok: true, data: [mockProject] })
 
       await useServerStore.getState().fetchProjects()
 
@@ -67,7 +67,7 @@ describe('useServerStore', () => {
     it('should set loading state during fetch', async () => {
       mockApi.invoke.mockImplementation(async () => {
         expect(useServerStore.getState().loading.projects).toBe(true)
-        return []
+        return { ok: true, data: [] }
       })
 
       await useServerStore.getState().fetchProjects()
@@ -86,11 +86,14 @@ describe('useServerStore', () => {
 
   describe('createProject', () => {
     it('should create project and add to store', async () => {
-      mockApi.invoke.mockResolvedValue(mockProject)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: mockProject })
 
       const result = await useServerStore.getState().createProject({ name: 'Test' })
 
-      expect(result).toEqual(mockProject)
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.data).toEqual(mockProject)
+      }
       expect(useServerStore.getState().projects).toContain(mockProject)
     })
   })
@@ -98,7 +101,7 @@ describe('useServerStore', () => {
   describe('archiveProject', () => {
     it('should archive project and update store', async () => {
       useServerStore.setState({ projects: [mockProject] })
-      mockApi.invoke.mockResolvedValue(undefined)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: undefined })
 
       await useServerStore.getState().archiveProject('proj-123')
 
@@ -149,7 +152,7 @@ describe('useServerStore', () => {
 
   describe('fetchVersions', () => {
     it('should fetch and store versions for project', async () => {
-      mockApi.invoke.mockResolvedValue([mockVersion])
+      mockApi.invoke.mockResolvedValue({ ok: true, data: [mockVersion] })
 
       await useServerStore.getState().fetchVersions('proj-123')
 
@@ -160,7 +163,7 @@ describe('useServerStore', () => {
 
   describe('createVersion', () => {
     it('should create version and add to store', async () => {
-      mockApi.invoke.mockResolvedValue(mockVersion)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: mockVersion })
 
       const result = await useServerStore.getState().createVersion({
         projectId: 'proj-123',
@@ -168,14 +171,17 @@ describe('useServerStore', () => {
         branchName: 'main',
       })
 
-      expect(result).toEqual(mockVersion)
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.data).toEqual(mockVersion)
+      }
       expect(useServerStore.getState().versions['proj-123']).toContain(mockVersion)
     })
   })
 
   describe('setCurrentVersion', () => {
     it('should set current version in store', () => {
-      mockApi.invoke.mockResolvedValue(undefined)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: undefined })
 
       useServerStore.getState().setCurrentVersion('proj-123', 'ver-456')
 
@@ -183,7 +189,7 @@ describe('useServerStore', () => {
     })
 
     it('should call API to set active version', () => {
-      mockApi.invoke.mockResolvedValue(undefined)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: undefined })
 
       useServerStore.getState().setCurrentVersion('proj-123', 'ver-456')
 
@@ -194,7 +200,7 @@ describe('useServerStore', () => {
   describe('fetchCredentials', () => {
     it('should fetch and store credentials', async () => {
       const mockCredentials = [{ id: 'cred-1', nickname: 'API_KEY', type: 'api_key' as const }]
-      mockApi.invoke.mockResolvedValue(mockCredentials)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: mockCredentials })
 
       await useServerStore.getState().fetchCredentials()
 
@@ -205,7 +211,7 @@ describe('useServerStore', () => {
   describe('addCredential', () => {
     it('should add credential and update store', async () => {
       const credential = { id: 'cred-1', nickname: 'API_KEY', type: 'api_key' as const }
-      mockApi.invoke.mockResolvedValue(credential)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: credential })
 
       const result = await useServerStore.getState().addCredential({
         nickname: 'API_KEY',
@@ -213,14 +219,17 @@ describe('useServerStore', () => {
         type: 'api_key',
       })
 
-      expect(result).toEqual(credential)
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.data).toEqual(credential)
+      }
       expect(useServerStore.getState().credentials).toContain(credential)
     })
   })
 
   describe('updateCredential', () => {
     it('should call API to update credential', async () => {
-      mockApi.invoke.mockResolvedValue(undefined)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: undefined })
 
       await useServerStore.getState().updateCredential('cred-1', 'new-value')
 
@@ -232,7 +241,7 @@ describe('useServerStore', () => {
     it('should delete credential and remove from store', async () => {
       const credential = { id: 'cred-1', nickname: 'API_KEY', type: 'api_key' as const }
       useServerStore.setState({ credentials: [credential] })
-      mockApi.invoke.mockResolvedValue(undefined)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: undefined })
 
       await useServerStore.getState().deleteCredential('cred-1')
 
@@ -243,7 +252,7 @@ describe('useServerStore', () => {
   describe('fetchSettings', () => {
     it('should fetch and store settings', async () => {
       const settings = { cloneRoot: '~/projects', executionParallelism: 2 }
-      mockApi.invoke.mockResolvedValue(settings)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: settings })
 
       await useServerStore.getState().fetchSettings()
 
@@ -254,11 +263,14 @@ describe('useServerStore', () => {
   describe('updateSettings', () => {
     it('should update settings and store result', async () => {
       const settings = { cloneRoot: '~/new-projects', executionParallelism: 2 }
-      mockApi.invoke.mockResolvedValue(settings)
+      mockApi.invoke.mockResolvedValue({ ok: true, data: settings })
 
       const result = await useServerStore.getState().updateSettings({ cloneRoot: '~/new-projects' })
 
-      expect(result).toEqual(settings)
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.data).toEqual(settings)
+      }
       expect(useServerStore.getState().settings).toEqual(settings)
     })
   })
@@ -375,7 +387,7 @@ describe('error handling', () => {
   it('fetchVersions should set loading state during fetch', async () => {
     mockApi.invoke.mockImplementation(async () => {
       expect(useServerStore.getState().loading.versions).toBe(true)
-      return []
+      return { ok: true, data: [] }
     })
 
     await useServerStore.getState().fetchVersions('proj-123')
@@ -408,7 +420,7 @@ describe('error handling', () => {
     useServerStore.setState({
       versions: { 'proj-123': [existingVersion] },
     })
-    mockApi.invoke.mockResolvedValue(mockVersion)
+    mockApi.invoke.mockResolvedValue({ ok: true, data: mockVersion })
 
     await useServerStore.getState().createVersion({
       projectId: 'proj-123',
@@ -475,7 +487,10 @@ describe('error handling', () => {
 
   it('setCurrentVersion should handle API error gracefully', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
-    mockApi.invoke.mockRejectedValue(new Error('Set active failed'))
+    mockApi.invoke.mockResolvedValue({
+      ok: false,
+      error: { code: 'UNKNOWN_ERROR', message: 'Set active failed' },
+    })
 
     // Should not throw, but log error
     useServerStore.getState().setCurrentVersion('proj-123', 'ver-456')
@@ -485,7 +500,7 @@ describe('error handling', () => {
 
     expect(consoleError).toHaveBeenCalledWith(
       'Failed to set active version:',
-      expect.any(Error)
+      'Set active failed'
     )
 
     consoleError.mockRestore()
