@@ -17,8 +17,9 @@ import type {
   VersionListInput,
   VersionGetInput,
   VersionSetActiveInput,
+  IPCResult,
 } from '@shared/types/ipc.types'
-import type { CreateVersionInput } from '@shared/types/project.types'
+import type { CreateVersionInput, Version } from '@shared/types/project.types'
 
 // Initialize dependencies
 const projectRepo = new SQLiteProjectRepository()
@@ -29,30 +30,32 @@ const versionRepo = new SQLiteVersionRepository()
  */
 export function registerVersionHandlers(): void {
   // version:list - Get all versions for a project
-  ipcMain.handle('version:list', async (_event, input: VersionListInput) => {
+  ipcMain.handle('version:list', async (_event, input: VersionListInput): Promise<IPCResult<Version[]>> => {
     try {
-      return await listVersions(
+      const data = await listVersions(
         { projectId: input.projectId },
         { projectRepo, versionRepo }
       )
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // version:get - Get a single version by ID
-  ipcMain.handle('version:get', async (_event, input: VersionGetInput) => {
+  ipcMain.handle('version:get', async (_event, input: VersionGetInput): Promise<IPCResult<Version | null>> => {
     try {
-      return await getVersion({ id: input.id }, { versionRepo })
+      const data = await getVersion({ id: input.id }, { versionRepo })
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // version:create - Create a new version
-  ipcMain.handle('version:create', async (_event, input: CreateVersionInput) => {
+  ipcMain.handle('version:create', async (_event, input: CreateVersionInput): Promise<IPCResult<Version>> => {
     try {
-      return await createVersion(
+      const data = await createVersion(
         {
           projectId: input.projectId,
           versionName: input.versionName,
@@ -60,17 +63,19 @@ export function registerVersionHandlers(): void {
         },
         { projectRepo, versionRepo }
       )
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // version:setActive - Set a version as active (for runtime)
-  ipcMain.handle('version:setActive', async (_event, input: VersionSetActiveInput) => {
+  ipcMain.handle('version:setActive', async (_event, input: VersionSetActiveInput): Promise<IPCResult<void>> => {
     try {
-      return await setActiveVersion({ id: input.id }, { versionRepo })
+      await setActiveVersion({ id: input.id }, { versionRepo })
+      return { ok: true, data: undefined }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 }

@@ -9,7 +9,7 @@ import { SQLiteVersionRepository } from '../repositories/sqlite-version.repo'
 import { getFileSystemAdapter } from '../adapters/file-system.adapter'
 import { serializeError } from '@shared/errors'
 import { readSpec, saveSpec } from '../../application/use-cases/spec'
-import type { SpecReadInput, SpecSaveInput } from '@shared/types/ipc.types'
+import type { SpecReadInput, SpecSaveInput, IPCResult } from '@shared/types/ipc.types'
 
 // Initialize dependencies
 const projectRepo = new SQLiteProjectRepository()
@@ -21,20 +21,22 @@ const fs = getFileSystemAdapter()
  */
 export function registerSpecHandlers(): void {
   // spec:read - Read a spec file
-  ipcMain.handle('spec:read', async (_event, input: SpecReadInput) => {
+  ipcMain.handle('spec:read', async (_event, input: SpecReadInput): Promise<IPCResult<string>> => {
     try {
-      return await readSpec(input, { projectRepo, versionRepo, fs })
+      const data = await readSpec(input, { projectRepo, versionRepo, fs })
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // spec:save - Save a spec file
-  ipcMain.handle('spec:save', async (_event, input: SpecSaveInput) => {
+  ipcMain.handle('spec:save', async (_event, input: SpecSaveInput): Promise<IPCResult<void>> => {
     try {
       await saveSpec(input, { projectRepo, versionRepo, fs })
+      return { ok: true, data: undefined }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 }

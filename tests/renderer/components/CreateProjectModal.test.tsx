@@ -126,7 +126,7 @@ describe('CreateProjectModal', () => {
   })
 
   it('should call createProject with form data', async () => {
-    mockCreateProject.mockResolvedValue({ id: 'proj-123', name: 'my-project' })
+    mockCreateProject.mockResolvedValue({ ok: true, data: { id: 'proj-123', name: 'my-project' } })
 
     render(<CreateProjectModal />, { wrapper: Wrapper })
 
@@ -149,7 +149,7 @@ describe('CreateProjectModal', () => {
   })
 
   it('should show success toast and navigate on success', async () => {
-    mockCreateProject.mockResolvedValue({ id: 'proj-123', name: 'my-project' })
+    mockCreateProject.mockResolvedValue({ ok: true, data: { id: 'proj-123', name: 'my-project' } })
 
     render(<CreateProjectModal />, { wrapper: Wrapper })
 
@@ -168,7 +168,10 @@ describe('CreateProjectModal', () => {
   })
 
   it('should handle GITHUB_NOT_AUTHENTICATED error', async () => {
-    mockCreateProject.mockRejectedValue({ code: 'GITHUB_NOT_AUTHENTICATED' })
+    mockCreateProject.mockResolvedValue({
+      ok: false,
+      error: { code: 'GITHUB_NOT_AUTHENTICATED', message: 'Not authenticated' },
+    })
 
     render(<CreateProjectModal />, { wrapper: Wrapper })
 
@@ -185,7 +188,10 @@ describe('CreateProjectModal', () => {
   })
 
   it('should handle GITHUB_CLI_NOT_FOUND error', async () => {
-    mockCreateProject.mockRejectedValue({ code: 'GITHUB_CLI_NOT_FOUND' })
+    mockCreateProject.mockResolvedValue({
+      ok: false,
+      error: { code: 'GITHUB_CLI_NOT_FOUND', message: 'CLI not found' },
+    })
 
     render(<CreateProjectModal />, { wrapper: Wrapper })
 
@@ -202,7 +208,10 @@ describe('CreateProjectModal', () => {
   })
 
   it('should handle GITHUB_REPO_EXISTS error', async () => {
-    mockCreateProject.mockRejectedValue({ code: 'GITHUB_REPO_EXISTS' })
+    mockCreateProject.mockResolvedValue({
+      ok: false,
+      error: { code: 'GITHUB_REPO_EXISTS', message: 'Repo exists' },
+    })
 
     render(<CreateProjectModal />, { wrapper: Wrapper })
 
@@ -216,9 +225,9 @@ describe('CreateProjectModal', () => {
   })
 
   it('should handle VALIDATION_ERROR', async () => {
-    mockCreateProject.mockRejectedValue({
-      code: 'VALIDATION_ERROR',
-      message: 'Custom validation error',
+    mockCreateProject.mockResolvedValue({
+      ok: false,
+      error: { code: 'VALIDATION_ERROR', message: 'Custom validation error' },
     })
 
     render(<CreateProjectModal />, { wrapper: Wrapper })
@@ -233,7 +242,10 @@ describe('CreateProjectModal', () => {
   })
 
   it('should handle generic error', async () => {
-    mockCreateProject.mockRejectedValue({ message: 'Something went wrong' })
+    mockCreateProject.mockResolvedValue({
+      ok: false,
+      error: { code: 'UNKNOWN_ERROR', message: 'Something went wrong' },
+    })
 
     render(<CreateProjectModal />, { wrapper: Wrapper })
 

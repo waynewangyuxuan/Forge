@@ -112,10 +112,11 @@ export async function deleteProject(
   // Determine outcome and apply changes
   if (input.deleteLocalFiles && !input.deleteFromGitHub) {
     // Deactivate: keep in DB, local files removed
-    // hasLocalFiles is computed at list time, so return updated project
+    // Data-driven: check actual filesystem state instead of assuming success
+    const stillExists = fs && project.path ? await fs.exists(project.path) : false
     return {
       outcome: 'deactivated',
-      project: { ...project, hasLocalFiles: false },
+      project: { ...project, hasLocalFiles: stillExists },
       warnings: warnings.length > 0 ? warnings : undefined,
     }
   }

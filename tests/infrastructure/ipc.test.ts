@@ -149,9 +149,10 @@ describe('IPC Handlers', () => {
     })
 
     it('should handle project:list', async () => {
-      const result = await invokeHandler('project:list', {})
-      expect(Array.isArray(result)).toBe(true)
-      expect(result).toHaveLength(1)
+      const result = await invokeHandler('project:list', {}) as { ok: boolean; data?: unknown[] }
+      expect(result.ok).toBe(true)
+      expect(Array.isArray(result.data)).toBe(true)
+      expect(result.data).toHaveLength(1)
     })
 
     it('should register project:get handler', async () => {
@@ -159,13 +160,16 @@ describe('IPC Handlers', () => {
     })
 
     it('should handle project:get', async () => {
-      const result = await invokeHandler('project:get', { id: projectId })
-      expect(result).toBeDefined()
-      expect((result as { id: string }).id).toBe(projectId)
+      const result = await invokeHandler('project:get', { id: projectId }) as { ok: boolean; data?: { id: string } }
+      expect(result.ok).toBe(true)
+      expect(result.data).toBeDefined()
+      expect(result.data!.id).toBe(projectId)
     })
 
     it('should handle project:get with non-existent id', async () => {
-      await expect(invokeHandler('project:get', { id: 'non-existent' })).rejects.toThrow()
+      const result = await invokeHandler('project:get', { id: 'non-existent' }) as { ok: boolean; error?: { code: string } }
+      expect(result.ok).toBe(false)
+      expect(result.error).toBeDefined()
     })
 
     it('should register project:create handler', async () => {
@@ -189,10 +193,11 @@ describe('IPC Handlers', () => {
         name: 'new-project',
         description: 'A test project',
         private: false,
-      })
+      }) as { ok: boolean; data?: { name: string } }
 
-      expect(result).toBeDefined()
-      expect((result as { name: string }).name).toBe('new-project')
+      expect(result.ok).toBe(true)
+      expect(result.data).toBeDefined()
+      expect(result.data!.name).toBe('new-project')
     })
 
     it('should register project:archive handler', async () => {
@@ -200,7 +205,8 @@ describe('IPC Handlers', () => {
     })
 
     it('should handle project:archive', async () => {
-      await expect(invokeHandler('project:archive', { id: projectId })).resolves.toBeUndefined()
+      const result = await invokeHandler('project:archive', { id: projectId }) as { ok: boolean }
+      expect(result.ok).toBe(true)
     })
 
     it('should register project:delete handler', async () => {
@@ -224,9 +230,10 @@ describe('IPC Handlers', () => {
     })
 
     it('should handle version:list', async () => {
-      const result = await invokeHandler('version:list', { projectId })
-      expect(Array.isArray(result)).toBe(true)
-      expect(result).toHaveLength(1)
+      const result = await invokeHandler('version:list', { projectId }) as { ok: boolean; data?: unknown[] }
+      expect(result.ok).toBe(true)
+      expect(Array.isArray(result.data)).toBe(true)
+      expect(result.data).toHaveLength(1)
     })
 
     it('should register version:get handler', async () => {
@@ -237,9 +244,10 @@ describe('IPC Handlers', () => {
       const versions = await versionRepo.findByProject(projectId)
       const versionId = versions[0].id
 
-      const result = await invokeHandler('version:get', { id: versionId })
-      expect(result).toBeDefined()
-      expect((result as { id: string }).id).toBe(versionId)
+      const result = await invokeHandler('version:get', { id: versionId }) as { ok: boolean; data?: { id: string } }
+      expect(result.ok).toBe(true)
+      expect(result.data).toBeDefined()
+      expect(result.data!.id).toBe(versionId)
     })
 
     it('should register version:create handler', async () => {
@@ -251,10 +259,11 @@ describe('IPC Handlers', () => {
         projectId,
         versionName: 'v2.0',
         branchName: 'develop',
-      })
+      }) as { ok: boolean; data?: { versionName: string } }
 
-      expect(result).toBeDefined()
-      expect((result as { versionName: string }).versionName).toBe('v2.0')
+      expect(result.ok).toBe(true)
+      expect(result.data).toBeDefined()
+      expect(result.data!.versionName).toBe('v2.0')
     })
 
     it('should register version:setActive handler', async () => {
@@ -265,8 +274,8 @@ describe('IPC Handlers', () => {
       const versions = await versionRepo.findByProject(projectId)
       const versionId = versions[0].id
 
-      const result = await invokeHandler('version:setActive', { id: versionId })
-      expect(result).toBeDefined()
+      const result = await invokeHandler('version:setActive', { id: versionId }) as { ok: boolean }
+      expect(result.ok).toBe(true)
     })
   })
 
@@ -289,9 +298,10 @@ describe('IPC Handlers', () => {
       const result = await invokeHandler('spec:read', {
         versionId,
         file: 'PRODUCT.md',
-      })
+      }) as { ok: boolean; data?: string }
 
-      expect(result).toBe('# Product Spec')
+      expect(result.ok).toBe(true)
+      expect(result.data).toBe('# Product Spec')
     })
 
     it('should handle spec:read when file does not exist', async () => {
@@ -305,9 +315,10 @@ describe('IPC Handlers', () => {
       const result = await invokeHandler('spec:read', {
         versionId,
         file: 'PRODUCT.md',
-      })
+      }) as { ok: boolean; data?: string }
 
-      expect(result).toBe('')
+      expect(result.ok).toBe(true)
+      expect(result.data).toBe('')
     })
 
     it('should register spec:save handler', async () => {
@@ -321,14 +332,13 @@ describe('IPC Handlers', () => {
       const versions = await versionRepo.findByProject(projectId)
       const versionId = versions[0].id
 
-      await expect(
-        invokeHandler('spec:save', {
-          versionId,
-          file: 'PRODUCT.md',
-          content: '# Updated Content',
-        })
-      ).resolves.toBeUndefined()
+      const result = await invokeHandler('spec:save', {
+        versionId,
+        file: 'PRODUCT.md',
+        content: '# Updated Content',
+      }) as { ok: boolean }
 
+      expect(result.ok).toBe(true)
       expect(mockFsAdapter.writeFile).toHaveBeenCalled()
     })
   })
@@ -349,9 +359,10 @@ describe('IPC Handlers', () => {
         user: { login: 'testuser', name: 'Test User', avatarUrl: 'https://example.com/avatar.png' },
       })
 
-      const result = await invokeHandler('github:checkAuth')
+      const result = await invokeHandler('github:checkAuth') as { ok: boolean; data?: unknown }
 
-      expect(result).toEqual({
+      expect(result.ok).toBe(true)
+      expect(result.data).toEqual({
         available: true,
         auth: {
           authenticated: true,
@@ -363,9 +374,10 @@ describe('IPC Handlers', () => {
     it('should handle github:checkAuth when not available', async () => {
       mockGitHubAdapter.isAvailable.mockResolvedValue(false)
 
-      const result = await invokeHandler('github:checkAuth')
+      const result = await invokeHandler('github:checkAuth') as { ok: boolean; data?: unknown }
 
-      expect(result).toEqual({
+      expect(result.ok).toBe(true)
+      expect(result.data).toEqual({
         available: false,
         auth: { authenticated: false },
       })
@@ -386,9 +398,10 @@ describe('IPC Handlers', () => {
       const result = await invokeHandler('github:createRepo', {
         name: 'test-repo',
         options: { private: true, description: 'Test repo' },
-      })
+      }) as { ok: boolean; data?: unknown }
 
-      expect(result).toEqual({
+      expect(result.ok).toBe(true)
+      expect(result.data).toEqual({
         owner: 'testuser',
         name: 'test-repo',
         cloneUrl: 'https://github.com/testuser/test-repo.git',
@@ -403,14 +416,13 @@ describe('IPC Handlers', () => {
     it('should handle github:cloneRepo', async () => {
       mockGitHubAdapter.cloneRepo.mockResolvedValue(undefined)
 
-      await expect(
-        invokeHandler('github:cloneRepo', {
-          owner: 'testuser',
-          repo: 'test-repo',
-          destPath: '/local/path',
-        })
-      ).resolves.toBeUndefined()
+      const result = await invokeHandler('github:cloneRepo', {
+        owner: 'testuser',
+        repo: 'test-repo',
+        destPath: '/local/path',
+      }) as { ok: boolean }
 
+      expect(result.ok).toBe(true)
       expect(mockGitHubAdapter.cloneRepo).toHaveBeenCalledWith('testuser', 'test-repo', '/local/path')
     })
   })
@@ -425,10 +437,11 @@ describe('IPC Handlers', () => {
     })
 
     it('should handle system:getSettings', async () => {
-      const result = await invokeHandler('system:getSettings')
+      const result = await invokeHandler('system:getSettings') as { ok: boolean; data?: { projectsLocation: string } }
 
-      expect(result).toBeDefined()
-      expect(typeof (result as { projectsLocation: string }).projectsLocation).toBe('string')
+      expect(result.ok).toBe(true)
+      expect(result.data).toBeDefined()
+      expect(typeof result.data!.projectsLocation).toBe('string')
     })
 
     it('should register system:updateSettings handler', async () => {
@@ -438,10 +451,11 @@ describe('IPC Handlers', () => {
     it('should handle system:updateSettings', async () => {
       const result = await invokeHandler('system:updateSettings', {
         projectsLocation: '/new/location',
-      })
+      }) as { ok: boolean; data?: { projectsLocation: string } }
 
-      expect(result).toBeDefined()
-      expect((result as { projectsLocation: string }).projectsLocation).toBe('/new/location')
+      expect(result.ok).toBe(true)
+      expect(result.data).toBeDefined()
+      expect(result.data!.projectsLocation).toBe('/new/location')
     })
 
     it('should register system:selectFolder handler', async () => {
@@ -455,9 +469,10 @@ describe('IPC Handlers', () => {
         filePaths: ['/selected/folder'],
       })
 
-      const result = await invokeHandler('system:selectFolder', { title: 'Select' })
+      const result = await invokeHandler('system:selectFolder', { title: 'Select' }) as { ok: boolean; data?: { path: string | null } }
 
-      expect(result).toEqual({ path: '/selected/folder' })
+      expect(result.ok).toBe(true)
+      expect(result.data).toEqual({ path: '/selected/folder' })
     })
 
     it('should handle system:selectFolder when cancelled', async () => {
@@ -467,9 +482,10 @@ describe('IPC Handlers', () => {
         filePaths: [],
       })
 
-      const result = await invokeHandler('system:selectFolder', {})
+      const result = await invokeHandler('system:selectFolder', {}) as { ok: boolean; data?: { path: string | null } }
 
-      expect(result).toEqual({ path: null })
+      expect(result.ok).toBe(true)
+      expect(result.data).toEqual({ path: null })
     })
 
     it('should register system:checkClaude handler', async () => {
@@ -485,9 +501,10 @@ describe('IPC Handlers', () => {
         return {} as ReturnType<typeof exec>
       })
 
-      const result = await invokeHandler('system:checkClaude')
+      const result = await invokeHandler('system:checkClaude') as { ok: boolean; data?: unknown }
 
-      expect(result).toEqual({
+      expect(result.ok).toBe(true)
+      expect(result.data).toEqual({
         available: true,
         version: 'claude 1.0.0',
       })
@@ -502,9 +519,10 @@ describe('IPC Handlers', () => {
         return {} as ReturnType<typeof exec>
       })
 
-      const result = await invokeHandler('system:checkClaude')
+      const result = await invokeHandler('system:checkClaude') as { ok: boolean; data?: unknown }
 
-      expect(result).toEqual({
+      expect(result.ok).toBe(true)
+      expect(result.data).toEqual({
         available: false,
       })
     })
@@ -517,10 +535,11 @@ describe('IPC Handlers', () => {
       const mockApp = vi.mocked(app)
       mockApp.getVersion.mockReturnValue('2.0.0')
 
-      const result = await invokeHandler('system:getAppInfo')
+      const result = await invokeHandler('system:getAppInfo') as { ok: boolean; data?: { version: string } }
 
-      expect(result).toBeDefined()
-      expect((result as { version: string }).version).toBe('2.0.0')
+      expect(result.ok).toBe(true)
+      expect(result.data).toBeDefined()
+      expect(result.data!.version).toBe('2.0.0')
     })
   })
 })

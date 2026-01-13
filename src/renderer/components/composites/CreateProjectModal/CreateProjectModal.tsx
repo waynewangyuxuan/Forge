@@ -10,6 +10,7 @@ import { Input } from '../../primitives/Input'
 import { Button } from '../../primitives/Button'
 import { useUIStore, useModalOpen } from '../../../stores/ui.store'
 import { useServerStore } from '../../../stores/server.store'
+import { ErrorCodes } from '@shared/constants'
 
 export const CreateProjectModal: React.FC = () => {
   const navigate = useNavigate()
@@ -53,50 +54,52 @@ export const CreateProjectModal: React.FC = () => {
     if (!validate()) return
 
     setLoading(true)
-    try {
-      const project = await createProject({
-        name: name.trim(),
-        description: description.trim() || undefined,
-        private: isPrivate,
-      })
 
-      showToast({
-        type: 'success',
-        message: `Project "${project.name}" created successfully`,
-      })
+    const result = await createProject({
+      name: name.trim(),
+      description: description.trim() || undefined,
+      private: isPrivate,
+    })
 
-      handleClose()
+    setLoading(false)
 
-      // Navigate to the new project
-      navigate(`/projects/${project.id}`)
-    } catch (error) {
-      console.error('Failed to create project:', error)
+    if (!result.ok) {
+      const { error } = result
 
-      // Handle specific error types
-      const err = error as { code?: string; message?: string }
-      if (err.code === 'GITHUB_NOT_AUTHENTICATED') {
+      // Handle specific error types using ErrorCodes
+      if (error.code === ErrorCodes.GITHUB_NOT_AUTHENTICATED) {
         showToast({
           type: 'error',
           message: 'Please connect GitHub in Settings first',
         })
-      } else if (err.code === 'GITHUB_CLI_NOT_FOUND') {
+      } else if (error.code === ErrorCodes.GITHUB_CLI_NOT_FOUND) {
         showToast({
           type: 'error',
           message: 'GitHub CLI not found. Please install gh from https://cli.github.com',
         })
-      } else if (err.code === 'GITHUB_REPO_EXISTS') {
+      } else if (error.code === ErrorCodes.GITHUB_REPO_EXISTS) {
         setErrors({ name: 'A repository with this name already exists' })
-      } else if (err.code === 'VALIDATION_ERROR') {
-        setErrors({ name: err.message })
+      } else if (error.code === ErrorCodes.VALIDATION_ERROR) {
+        setErrors({ name: error.message })
       } else {
         showToast({
           type: 'error',
-          message: err.message || 'Failed to create project',
+          message: error.message || 'Failed to create project',
         })
       }
-    } finally {
-      setLoading(false)
+      return
     }
+
+    // Success
+    showToast({
+      type: 'success',
+      message: `Project "${result.data.name}" created successfully`,
+    })
+
+    handleClose()
+
+    // Navigate to the new project
+    navigate(`/projects/${result.data.id}`)
   }
 
   return (
