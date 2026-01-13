@@ -28,6 +28,22 @@ if (!target || !['electron', 'node'].includes(target)) {
   process.exit(1)
 }
 
+// Get version info to detect changes
+function getTargetKey() {
+  if (target === 'electron') {
+    try {
+      const electronPkg = JSON.parse(readFileSync(join(ROOT, 'node_modules/electron/package.json'), 'utf-8'))
+      return `electron@${electronPkg.version}`
+    } catch {
+      return 'electron'
+    }
+  } else {
+    return `node@${process.version}`
+  }
+}
+
+const targetKey = getTargetKey()
+
 // Check cached target
 let cachedTarget = null
 if (existsSync(CACHE_FILE)) {
@@ -38,8 +54,8 @@ if (existsSync(CACHE_FILE)) {
   }
 }
 
-if (cachedTarget === target) {
-  // Already built for this target, skip rebuild
+if (cachedTarget === targetKey) {
+  // Already built for this target and version, skip rebuild
   process.exit(0)
 }
 
@@ -94,9 +110,9 @@ async function rebuild() {
       )
     }
 
-    // Cache the successful build target
-    writeFileSync(CACHE_FILE, target)
-    console.log(`Native modules ready for ${target}`)
+    // Cache the successful build target with version
+    writeFileSync(CACHE_FILE, targetKey)
+    console.log(`Native modules ready for ${targetKey}`)
   } catch (error) {
     console.error(`Failed to rebuild native modules for ${target}: ${error.message}`)
     console.error('Tip: If stuck, try: rm -rf node_modules/better-sqlite3/build && npm install')
