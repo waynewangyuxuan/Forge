@@ -10,7 +10,9 @@ import type {
   GitHubCheckAuthOutput,
   GitHubCreateRepoInput,
   GitHubCloneRepoInput,
+  IPCResult,
 } from '@shared/types/ipc.types'
+import type { GitHubRepo } from '@shared/types/github.types'
 
 /**
  * Register all GitHub IPC handlers
@@ -19,44 +21,51 @@ export function registerGitHubHandlers(): void {
   const github = getGitHubAdapter()
 
   // github:checkAuth - Check if gh CLI is available and authenticated
-  ipcMain.handle('github:checkAuth', async (): Promise<GitHubCheckAuthOutput> => {
+  ipcMain.handle('github:checkAuth', async (): Promise<IPCResult<GitHubCheckAuthOutput>> => {
     try {
       const available = await github.isAvailable()
 
       if (!available) {
         return {
-          available: false,
-          auth: { authenticated: false },
+          ok: true,
+          data: {
+            available: false,
+            auth: { authenticated: false },
+          },
         }
       }
 
       const auth = await github.checkAuth()
 
       return {
-        available: true,
-        auth,
+        ok: true,
+        data: {
+          available: true,
+          auth,
+        },
       }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // github:createRepo - Create a new GitHub repository
-  ipcMain.handle('github:createRepo', async (_event, input: GitHubCreateRepoInput) => {
+  ipcMain.handle('github:createRepo', async (_event, input: GitHubCreateRepoInput): Promise<IPCResult<GitHubRepo>> => {
     try {
-      const repo = await github.createRepo(input.name, input.options)
-      return repo
+      const data = await github.createRepo(input.name, input.options)
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // github:cloneRepo - Clone a repository to local path
-  ipcMain.handle('github:cloneRepo', async (_event, input: GitHubCloneRepoInput) => {
+  ipcMain.handle('github:cloneRepo', async (_event, input: GitHubCloneRepoInput): Promise<IPCResult<void>> => {
     try {
       await github.cloneRepo(input.owner, input.repo, input.destPath)
+      return { ok: true, data: undefined }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 }

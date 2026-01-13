@@ -6,9 +6,8 @@
 import { create } from 'zustand'
 import type { Project, Version, CreateProjectInput, CreateVersionInput } from '@shared/types/project.types'
 import type { Credential, AddCredentialInput, Settings } from '@shared/types/runtime.types'
-import type { IPCError, IPCResult, ProjectDeleteOutput } from '@shared/types/ipc.types'
-import { invokeTyped } from '../lib/ipc'
-import { isSerializedError, serializeError } from '@shared/errors'
+import type { IPCResult, ProjectDeleteOutput } from '@shared/types/ipc.types'
+import { invokeTyped, unwrapResult } from '../lib/ipc'
 
 /**
  * Loading states for different data types
@@ -44,30 +43,32 @@ interface ServerStore {
   loading: LoadingState
 
   // ========== Project Actions ==========
+  // Pattern A (fetch): uses unwrapResult internally, throws on error
+  // Pattern B (mutations): returns IPCResult<T> for UI error handling
 
-  fetchProjects: () => Promise<void>
-  createProject: (input: CreateProjectInput) => Promise<Project>
-  archiveProject: (id: string) => Promise<void>
-  deleteProject: (id: string, options?: { deleteFromGitHub?: boolean; deleteLocalFiles?: boolean }) => Promise<IPCResult<ProjectDeleteOutput>>
-  activateProject: (id: string) => Promise<Project>
+  fetchProjects: () => Promise<void>  // Pattern A
+  createProject: (input: CreateProjectInput) => Promise<IPCResult<Project>>  // Pattern B
+  archiveProject: (id: string) => Promise<IPCResult<void>>  // Pattern B
+  deleteProject: (id: string, options?: { deleteFromGitHub?: boolean; deleteLocalFiles?: boolean }) => Promise<IPCResult<ProjectDeleteOutput>>  // Pattern B
+  activateProject: (id: string) => Promise<IPCResult<Project>>  // Pattern B
 
   // ========== Version Actions ==========
 
-  fetchVersions: (projectId: string) => Promise<void>
-  createVersion: (input: CreateVersionInput) => Promise<Version>
+  fetchVersions: (projectId: string) => Promise<void>  // Pattern A
+  createVersion: (input: CreateVersionInput) => Promise<IPCResult<Version>>  // Pattern B
   setCurrentVersion: (projectId: string, versionId: string) => void
 
   // ========== Credentials Actions ==========
 
-  fetchCredentials: () => Promise<void>
-  addCredential: (input: AddCredentialInput) => Promise<Credential>
-  updateCredential: (id: string, value: string) => Promise<void>
-  deleteCredential: (id: string) => Promise<void>
+  fetchCredentials: () => Promise<void>  // Pattern A
+  addCredential: (input: AddCredentialInput) => Promise<IPCResult<Credential>>  // Pattern B
+  updateCredential: (id: string, value: string) => Promise<IPCResult<void>>  // Pattern B
+  deleteCredential: (id: string) => Promise<IPCResult<void>>  // Pattern B
 
   // ========== Settings Actions ==========
 
-  fetchSettings: () => Promise<void>
-  updateSettings: (updates: Partial<Settings>) => Promise<Settings>
+  fetchSettings: () => Promise<void>  // Pattern A
+  updateSettings: (updates: Partial<Settings>) => Promise<IPCResult<Settings>>  // Pattern B
 }
 
 export const useServerStore = create<ServerStore>((set) => ({
@@ -89,7 +90,8 @@ export const useServerStore = create<ServerStore>((set) => ({
   fetchProjects: async () => {
     set((s) => ({ loading: { ...s.loading, projects: true } }))
     try {
-      const projects = (await window.api.invoke('project:list', {})) as Project[]
+      const result = await invokeTyped('project:list', {})
+      const projects = unwrapResult(result)  // throws if !ok
       set({ projects })
     } catch (error) {
       console.error('Failed to fetch projects:', error)
@@ -100,45 +102,32 @@ export const useServerStore = create<ServerStore>((set) => ({
   },
 
   createProject: async (input: CreateProjectInput) => {
-    try {
-      const project = (await window.api.invoke('project:create', input)) as Project
-      set((s) => ({ projects: [...s.projects, project] }))
-      return project
-    } catch (error) {
-      console.error('Failed to create project:', error)
-      throw error
+    const result = await invokeTyped('project:create', input)
+    if (result.ok) {
+      set((s) => ({ projects: [...s.projects, result.data] }))
     }
+    return result
   },
 
   archiveProject: async (id: string) => {
-    try {
-      await window.api.invoke('project:archive', { id })
+    const result = await invokeTyped('project:archive', { id })
+    if (result.ok) {
       set((s) => ({
         projects: s.projects.map((p) =>
           p.id === id ? { ...p, archivedAt: new Date().toISOString() } : p
         ),
       }))
-    } catch (error) {
-      console.error('Failed to archive project:', error)
-      throw error
     }
+    return result
   },
 
   deleteProject: async (id: string, options?: { deleteFromGitHub?: boolean; deleteLocalFiles?: boolean }) => {
-    let result: IPCResult<ProjectDeleteOutput>
-
-    try {
-      result = await invokeTyped('project:delete', {
-        id,
-        deleteFromGitHub: options?.deleteFromGitHub,
-        deleteLocalFiles: options?.deleteLocalFiles,
-      })
-    } catch (error) {
-      const ipcError: IPCError = isSerializedError(error)
-        ? (error as IPCError)
-        : (serializeError(error) as IPCError)
-      return { ok: false, error: ipcError }
-    }
+    // All IPC handlers now return IPCResult, no throwing
+    const result = await invokeTyped('project:delete', {
+      id,
+      deleteFromGitHub: options?.deleteFromGitHub,
+      deleteLocalFiles: options?.deleteLocalFiles,
+    })
 
     // Don't update state if operation failed
     if (!result.ok) {
@@ -170,17 +159,14 @@ export const useServerStore = create<ServerStore>((set) => ({
   },
 
   activateProject: async (id: string) => {
-    try {
-      const project = (await window.api.invoke('project:activate', { id })) as Project
+    const result = await invokeTyped('project:activate', { id })
+    if (result.ok) {
       // Update the project in the list with new hasLocalFiles status
       set((s) => ({
-        projects: s.projects.map((p) => (p.id === id ? project : p)),
+        projects: s.projects.map((p) => (p.id === id ? result.data : p)),
       }))
-      return project
-    } catch (error) {
-      console.error('Failed to activate project:', error)
-      throw error
     }
+    return result
   },
 
   // ========== Version Actions ==========
@@ -188,7 +174,8 @@ export const useServerStore = create<ServerStore>((set) => ({
   fetchVersions: async (projectId: string) => {
     set((s) => ({ loading: { ...s.loading, versions: true } }))
     try {
-      const versions = (await window.api.invoke('version:list', { projectId })) as Version[]
+      const result = await invokeTyped('version:list', { projectId })
+      const versions = unwrapResult(result)  // throws if !ok
       set((s) => ({
         versions: { ...s.versions, [projectId]: versions },
       }))
@@ -201,28 +188,27 @@ export const useServerStore = create<ServerStore>((set) => ({
   },
 
   createVersion: async (input: CreateVersionInput) => {
-    try {
-      const version = (await window.api.invoke('version:create', input)) as Version
+    const result = await invokeTyped('version:create', input)
+    if (result.ok) {
       set((s) => ({
         versions: {
           ...s.versions,
-          [input.projectId]: [...(s.versions[input.projectId] || []), version],
+          [input.projectId]: [...(s.versions[input.projectId] || []), result.data],
         },
       }))
-      return version
-    } catch (error) {
-      console.error('Failed to create version:', error)
-      throw error
     }
+    return result
   },
 
   setCurrentVersion: (projectId: string, versionId: string) => {
     set((s) => ({
       currentVersionId: { ...s.currentVersionId, [projectId]: versionId },
     }))
-    // Also update on server
-    window.api.invoke('version:setActive', { id: versionId }).catch((error) => {
-      console.error('Failed to set active version:', error)
+    // Fire-and-forget: update on server, check result but don't block
+    invokeTyped('version:setActive', { id: versionId }).then((result) => {
+      if (!result.ok) {
+        console.error('Failed to set active version:', result.error.message)
+      }
     })
   },
 
@@ -231,7 +217,8 @@ export const useServerStore = create<ServerStore>((set) => ({
   fetchCredentials: async () => {
     set((s) => ({ loading: { ...s.loading, credentials: true } }))
     try {
-      const credentials = (await window.api.invoke('credentials:list')) as Credential[]
+      const result = await invokeTyped('credentials:list', undefined)
+      const credentials = unwrapResult(result)  // throws if !ok
       set({ credentials })
     } catch (error) {
       console.error('Failed to fetch credentials:', error)
@@ -242,35 +229,25 @@ export const useServerStore = create<ServerStore>((set) => ({
   },
 
   addCredential: async (input: AddCredentialInput) => {
-    try {
-      const credential = (await window.api.invoke('credentials:add', input)) as Credential
-      set((s) => ({ credentials: [...s.credentials, credential] }))
-      return credential
-    } catch (error) {
-      console.error('Failed to add credential:', error)
-      throw error
+    const result = await invokeTyped('credentials:add', input)
+    if (result.ok) {
+      set((s) => ({ credentials: [...s.credentials, result.data] }))
     }
+    return result
   },
 
   updateCredential: async (id: string, value: string) => {
-    try {
-      await window.api.invoke('credentials:update', { id, value })
-    } catch (error) {
-      console.error('Failed to update credential:', error)
-      throw error
-    }
+    return await invokeTyped('credentials:update', { id, value })
   },
 
   deleteCredential: async (id: string) => {
-    try {
-      await window.api.invoke('credentials:delete', { id })
+    const result = await invokeTyped('credentials:delete', { id })
+    if (result.ok) {
       set((s) => ({
         credentials: s.credentials.filter((c) => c.id !== id),
       }))
-    } catch (error) {
-      console.error('Failed to delete credential:', error)
-      throw error
     }
+    return result
   },
 
   // ========== Settings Actions ==========
@@ -278,7 +255,8 @@ export const useServerStore = create<ServerStore>((set) => ({
   fetchSettings: async () => {
     set((s) => ({ loading: { ...s.loading, settings: true } }))
     try {
-      const settings = (await window.api.invoke('system:getSettings')) as Settings
+      const result = await invokeTyped('system:getSettings', undefined)
+      const settings = unwrapResult(result)  // throws if !ok
       set({ settings })
     } catch (error) {
       console.error('Failed to fetch settings:', error)
@@ -289,14 +267,11 @@ export const useServerStore = create<ServerStore>((set) => ({
   },
 
   updateSettings: async (updates: Partial<Settings>) => {
-    try {
-      const settings = (await window.api.invoke('system:updateSettings', updates)) as Settings
-      set({ settings })
-      return settings
-    } catch (error) {
-      console.error('Failed to update settings:', error)
-      throw error
+    const result = await invokeTyped('system:updateSettings', updates)
+    if (result.ok) {
+      set({ settings: result.data })
     }
+    return result
   },
 }))
 

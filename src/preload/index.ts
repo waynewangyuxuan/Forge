@@ -7,39 +7,12 @@ export interface IElectronAPI {
   once: (channel: string, callback: (data: unknown) => void) => void
 }
 
-/**
- * Custom error class that preserves error properties across IPC
- */
-class IPCError extends Error {
-  code?: string
-
-  constructor(message: string, code?: string) {
-    super(message)
-    this.name = 'IPCError'
-    this.code = code
-  }
-}
-
 // Expose API to renderer process
 const api: IElectronAPI = {
-  // Request-response pattern with error handling
+  // Request-response pattern
+  // All IPC handlers now return IPCResult<T> envelope, no throwing
   invoke: async (channel: string, data?: unknown) => {
-    try {
-      return await ipcRenderer.invoke(channel, data)
-    } catch (error) {
-      // Electron serializes errors but loses custom properties
-      // The error message from our serializeError should contain useful info
-      const err = error as { message?: string; code?: string }
-      const message = err.message || String(error)
-
-      // Try to extract code from error if it's our serialized format
-      // Our serializeError throws { message, code, name }
-      const code = err.code || undefined
-
-      // Create a proper error with code property
-      const ipcError = new IPCError(message, code)
-      throw ipcError
-    }
+    return await ipcRenderer.invoke(channel, data)
   },
 
   // Subscribe to events from main process

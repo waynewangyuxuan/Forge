@@ -406,41 +406,41 @@ export interface GitHubCloneRepoInput {
  * Usage: IPCChannelMap['project:list']['input'] -> ProjectListInput
  */
 export interface IPCChannelMap {
-  // Project
-  'project:list': { input: ProjectListInput; output: Project[] }
-  'project:create': { input: CreateProjectInput; output: Project }
-  'project:get': { input: ProjectGetInput; output: Project | null }
-  'project:archive': { input: ProjectArchiveInput; output: void }
+  // Project - all return IPCResult<T> for reliable error handling
+  'project:list': { input: ProjectListInput; output: IPCResult<Project[]> }
+  'project:create': { input: CreateProjectInput; output: IPCResult<Project> }
+  'project:get': { input: ProjectGetInput; output: IPCResult<Project | null> }
+  'project:archive': { input: ProjectArchiveInput; output: IPCResult<void> }
   'project:delete': { input: ProjectDeleteInput; output: IPCResult<ProjectDeleteOutput> }
-  'project:activate': { input: ProjectActivateInput; output: Project }
+  'project:activate': { input: ProjectActivateInput; output: IPCResult<Project> }
 
-  // Version
-  'version:list': { input: VersionListInput; output: Version[] }
-  'version:get': { input: VersionGetInput; output: Version | null }
-  'version:create': { input: CreateVersionInput; output: Version }
-  'version:setActive': { input: VersionSetActiveInput; output: void }
+  // Version - all return IPCResult<T>
+  'version:list': { input: VersionListInput; output: IPCResult<Version[]> }
+  'version:get': { input: VersionGetInput; output: IPCResult<Version | null> }
+  'version:create': { input: CreateVersionInput; output: IPCResult<Version> }
+  'version:setActive': { input: VersionSetActiveInput; output: IPCResult<void> }
 
-  // Spec
-  'spec:read': { input: SpecReadInput; output: string }
-  'spec:save': { input: SpecSaveInput; output: void }
+  // Spec - all return IPCResult<T>
+  'spec:read': { input: SpecReadInput; output: IPCResult<string> }
+  'spec:save': { input: SpecSaveInput; output: IPCResult<void> }
 
-  // System
-  'system:getSettings': { input: void; output: Settings }
-  'system:updateSettings': { input: Partial<Settings>; output: Settings }
-  'system:selectFolder': { input: SystemSelectFolderInput; output: SystemSelectFolderOutput }
-  'system:checkClaude': { input: void; output: SystemCheckClaudeOutput }
-  'system:getAppInfo': { input: void; output: SystemAppInfoOutput }
+  // System - all return IPCResult<T>
+  'system:getSettings': { input: void; output: IPCResult<Settings> }
+  'system:updateSettings': { input: Partial<Settings>; output: IPCResult<Settings> }
+  'system:selectFolder': { input: SystemSelectFolderInput; output: IPCResult<SystemSelectFolderOutput> }
+  'system:checkClaude': { input: void; output: IPCResult<SystemCheckClaudeOutput> }
+  'system:getAppInfo': { input: void; output: IPCResult<SystemAppInfoOutput> }
 
-  // Credentials
-  'credentials:list': { input: void; output: Credential[] }
-  'credentials:add': { input: AddCredentialInput; output: Credential }
-  'credentials:update': { input: CredentialsUpdateInput; output: void }
-  'credentials:delete': { input: CredentialsDeleteInput; output: void }
+  // Credentials - all return IPCResult<T>
+  'credentials:list': { input: void; output: IPCResult<Credential[]> }
+  'credentials:add': { input: AddCredentialInput; output: IPCResult<Credential> }
+  'credentials:update': { input: CredentialsUpdateInput; output: IPCResult<void> }
+  'credentials:delete': { input: CredentialsDeleteInput; output: IPCResult<void> }
 
-  // GitHub
-  'github:checkAuth': { input: void; output: GitHubCheckAuthOutput }
-  'github:createRepo': { input: GitHubCreateRepoInput; output: GitHubRepo }
-  'github:cloneRepo': { input: GitHubCloneRepoInput; output: void }
+  // GitHub - all return IPCResult<T>
+  'github:checkAuth': { input: void; output: IPCResult<GitHubCheckAuthOutput> }
+  'github:createRepo': { input: GitHubCreateRepoInput; output: IPCResult<GitHubRepo> }
+  'github:cloneRepo': { input: GitHubCloneRepoInput; output: IPCResult<void> }
 }
 
 /**
