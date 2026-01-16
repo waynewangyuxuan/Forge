@@ -11,3 +11,6 @@ export * from './version'
 
 // Spec use cases
 export * from './spec'
+
+// Scaffold use cases
+export * from './scaffold'
