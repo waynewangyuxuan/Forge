@@ -37,6 +37,26 @@ export interface ExecutionConfig {
 }
 
 /**
+ * Prompt variable definition
+ */
+export interface PromptVariable {
+  name: string
+  required: boolean
+  description: string
+}
+
+/**
+ * Prompt configuration
+ */
+export interface PromptConfig {
+  name: string
+  version: string
+  description: string
+  variables: PromptVariable[]
+  template: string
+}
+
+/**
  * Config cache to avoid re-reading files
  */
 const configCache = new Map<string, unknown>()
@@ -145,4 +165,38 @@ export function configExists(relativePath: string): boolean {
  */
 export function getAvailableStateMachines(): string[] {
   return ['dev-flow', 'runtime-flow']
+}
+
+/**
+ * Load prompt configuration
+ */
+export function loadPromptConfig(id: string): PromptConfig {
+  return loadYamlFile<PromptConfig>(`prompts/${id}.yaml`)
+}
+
+/**
+ * Load scaffold generator prompt config
+ */
+export function loadScaffoldGeneratorPrompt(): PromptConfig {
+  return loadPromptConfig('scaffold-generator')
+}
+
+/**
+ * Load a template file (raw text, not YAML)
+ */
+export function loadTemplate(relativePath: string): string {
+  const fullPath = join(getConfigDir(), relativePath)
+
+  if (!existsSync(fullPath)) {
+    throw new Error(`Template file not found: ${fullPath}`)
+  }
+
+  return readFileSync(fullPath, 'utf-8')
+}
+
+/**
+ * Load CLAUDE.md template
+ */
+export function loadClaudeMdTemplate(): string {
+  return loadTemplate('templates/claude-md.template.md')
 }

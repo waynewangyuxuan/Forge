@@ -1,0 +1,119 @@
+# Scaffold Generator Prompt
+# Generates TODO.md task breakdown from project specifications
+#
+# Variables:
+#   - project_name: Name of the project
+#   - product_spec: Content of PRODUCT.md
+#   - technical_spec: Content of TECHNICAL.md
+#   - regulation_spec: Content of REGULATION.md (optional)
+
+name: scaffold-generator
+version: "1.0"
+description: Generate structured task breakdown from project specifications
+
+variables:
+  - name: project_name
+    required: true
+    description: The name of the project
+  - name: product_spec
+    required: true
+    description: Content of PRODUCT.md file
+  - name: technical_spec
+    required: true
+    description: Content of TECHNICAL.md file
+  - name: regulation_spec
+    required: false
+    description: Content of REGULATION.md file (optional)
+
+template: |
+  You are an expert software architect. Your task is to break down a project specification into a detailed, executable task list.
+
+  ## Project: {{project_name}}
+
+  ## Specifications
+
+  <product_spec>
+  {{product_spec}}
+  </product_spec>
+
+  <technical_spec>
+  {{technical_spec}}
+  </technical_spec>
+
+  {{#if regulation_spec}}
+  <regulation_spec>
+  {{regulation_spec}}
+  </regulation_spec>
+  {{/if}}
+
+  ## Your Task
+
+  Generate a JSON scaffold that breaks down this project into milestones and tasks.
+
+  ### Requirements
+
+  1. **Task Granularity**: Each task should be completable in 5-10 minutes by an AI coding assistant
+  2. **Clear Dependencies**: Tasks should have explicit dependencies (use task IDs like "001", "002")
+  3. **Verification**: Each task must have a concrete verification criterion
+  4. **Complete Coverage**: Tasks should cover the entire project from initial setup to completion
+  5. **Logical Order**: Organize tasks into milestones that represent logical phases
+
+  ### Output Format
+
+  Return ONLY a JSON object with this exact structure (no markdown, no explanation):
+
+  ```json
+  {
+    "project": {
+      "name": "project-name",
+      "description": "One sentence project description"
+    },
+    "context": {
+      "architecture": "Key architectural decisions summarized (2-3 sentences)",
+      "conventions": "Code style and naming conventions (2-3 sentences)"
+    },
+    "milestones": [
+      {
+        "id": "M1",
+        "name": "Milestone Name",
+        "description": "Why this milestone exists",
+        "tasks": [
+          {
+            "id": "001",
+            "title": "Short task title",
+            "description": "Detailed description of what to do. Be specific about files to create, functions to implement, etc.",
+            "verification": "How to verify this task is complete. E.g., 'Run npm test and all tests pass' or 'File exists at src/index.ts'",
+            "depends": []
+          },
+          {
+            "id": "002",
+            "title": "Another task",
+            "description": "...",
+            "verification": "...",
+            "depends": ["001"]
+          }
+        ]
+      }
+    ]
+  }
+  ```
+
+  ### Example Task Breakdown
+
+  For a typical web project, milestones might be:
+  - M1: Project Setup (npm init, TypeScript, ESLint, project structure)
+  - M2: Data Layer (types, models, database setup)
+  - M3: Core Logic (business logic, services)
+  - M4: API/UI (endpoints or components)
+  - M5: Integration (connecting pieces, E2E)
+  - M6: Polish (error handling, validation, tests)
+
+  ### Important Guidelines
+
+  - Use sequential numeric IDs: "001", "002", "003"... (padded to 3 digits)
+  - Dependencies should only reference earlier task IDs
+  - Each task should be atomic - one clear thing to do
+  - Verification should be testable (run a command, check a file exists, etc.)
+  - Description should be detailed enough for an AI to execute without asking questions
+
+  Now generate the JSON scaffold for this project:
