@@ -33,8 +33,8 @@ export const Card: React.FC<CardProps> = ({
   onClick,
   className = '',
 }) => {
-  const baseStyles = 'bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden shadow-sm'
-  const hoverStyles = hover ? 'hover:border-[#d4d4d4] hover:shadow-md transition-all duration-150 cursor-pointer' : ''
+  const baseStyles = 'bg-[#f8f8f7] border border-[#e5e5e5] rounded-2xl overflow-hidden'
+  const hoverStyles = hover ? 'hover:bg-white hover:border-[#d4d4d4] hover:shadow-md transition-all duration-150 cursor-pointer' : ''
   const clickableStyles = onClick ? 'cursor-pointer' : ''
 
   return (
