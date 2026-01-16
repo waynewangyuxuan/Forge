@@ -20,6 +20,10 @@ import {
   GitHubRepo,
   CreateRepoOptions,
 } from './github.types'
+import {
+  GenerateScaffoldInput,
+  GenerateScaffoldResult,
+} from './scaffold.types'
 import { ErrorCode, WarningCode } from '../constants'
 
 // ============================================================
@@ -441,6 +445,10 @@ export interface IPCChannelMap {
   'github:checkAuth': { input: void; output: IPCResult<GitHubCheckAuthOutput> }
   'github:createRepo': { input: GitHubCreateRepoInput; output: IPCResult<GitHubRepo> }
   'github:cloneRepo': { input: GitHubCloneRepoInput; output: IPCResult<void> }
+
+  // Scaffold - all return IPCResult<T>
+  'scaffold:generate': { input: GenerateScaffoldInput; output: IPCResult<GenerateScaffoldResult> }
+  'scaffold:checkClaudeAvailable': { input: void; output: IPCResult<{ available: boolean; version: string | null }> }
 }
 
 /**
