@@ -5,3 +5,4 @@
 
 export { FileSystemAdapter, getFileSystemAdapter } from './file-system.adapter'
 export { GitHubAdapter, getGitHubAdapter } from './github.adapter'
+export { ClaudeCliAdapter, getClaudeAdapter } from './claude.adapter'
