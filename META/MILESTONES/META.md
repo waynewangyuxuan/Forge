@@ -18,9 +18,12 @@ M0: 项目脚手架     ──►  M1: 核心基础设施  ──►  M2: 项目
                                                     │
                                                     ▼
 M5: Review 流程   ◄──────────────────────  M4: Scaffold 生成
-        │
-        ▼
-M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
+        │                                          │
+        ▼                                          ▼
+M6: 代码执行      ──►  M7: Runtime 运行   M4.1: Git Operations
+                              │            M4.2: System Logger
+                              ▼
+                        M8: Dashboard
                                                     │
                                                     ▼
                                               M9: 集成与打磨
@@ -36,7 +39,9 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 | [M2.5.md](M2.5.md) | ✅ complete | GitHub 集成 - GitHub-first 项目创建 |
 | [M3.md](M3.md) | ✅ complete | Spec 编辑 - Markdown 编辑器 (CodeMirror) |
 | M3.5 | ✅ complete | Bug Fixes & Enhancements - Delete项目、UI修复 |
-| [M4.md](M4.md) | pending | Scaffold 生成 - AI 生成 TODO.md |
+| [M4.md](M4.md) | 🔄 in progress | Scaffold 生成 - AI 生成 TODO.md |
+| [M4.1.md](M4.1.md) | pending | Git Operations - Config-driven git 操作模块 |
+| [M4.2.md](M4.2.md) | pending | System Logger - 统一日志基础设施 |
 | [M5.md](M5.md) | pending | Review 流程 - TODO 审核与 Approve |
 | [M6.md](M6.md) | pending | 代码执行 - 任务逐个执行 |
 | [M7.md](M7.md) | pending | Runtime 运行 - 运行管理与 Credentials |
@@ -53,7 +58,9 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 | M2.5 | ✅ complete | 2026-01-09 | 2026-01-09 |
 | M3 | ✅ complete | 2026-01-09 | 2026-01-09 |
 | M3.5 | ✅ complete | 2026-01-09 | 2026-01-09 |
-| M4 | pending | - | - |
+| M4 | 🔄 in progress | 2026-01-15 | - |
+| M4.1 | pending | - | - |
+| M4.2 | pending | - | - |
 | M5 | pending | - | - |
 | M6 | pending | - | - |
 | M7 | pending | - | - |
@@ -67,7 +74,6 @@ M6: 代码执行      ──►  M7: Runtime 运行   ──►  M8: Dashboard
 - [ ] Review: suggest edit、direct edit（行级 feedback）
 - [ ] Iterate: 基于已完成版本创建新版本
 - [ ] 多 Claude 并行执行
-- [ ] 执行策略配置（commit 策略等）
 - [ ] 更丰富的 Dashboard 图表
 - [ ] 项目模板
 - [ ] 插件系统
