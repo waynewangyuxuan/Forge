@@ -130,7 +130,8 @@ const Wrapper = ({ children }: { children: React.ReactNode }) => (
 describe('SpecPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockInvoke.mockResolvedValue('# Test Content')
+    // Default mock returns IPCResult envelope format
+    mockInvoke.mockResolvedValue({ ok: true, data: '# Test Content' })
     // Reset mock data
     mockVersions = [
       {
@@ -248,7 +249,7 @@ describe('SpecPage', () => {
   })
 
   it('should have Save button disabled when no changes', async () => {
-    mockInvoke.mockResolvedValue('# Test Content')
+    mockInvoke.mockResolvedValue({ ok: true, data: '# Test Content' })
 
     render(<SpecPage />, { wrapper: Wrapper })
 
@@ -267,7 +268,7 @@ describe('SpecPage', () => {
   })
 
   it('should render tabs and allow switching', async () => {
-    mockInvoke.mockResolvedValue('# Test Content')
+    mockInvoke.mockResolvedValue({ ok: true, data: '# Test Content' })
 
     render(<SpecPage />, { wrapper: Wrapper })
 
@@ -291,12 +292,12 @@ describe('SpecPage', () => {
     mockInvoke.mockImplementation(async (channel: string, args: Record<string, unknown>) => {
       if (channel === 'spec:read') {
         loadCallCount++
-        return '# Original Content'
+        return { ok: true, data: '# Original Content' }
       }
       if (channel === 'spec:save') {
-        return undefined
+        return { ok: true, data: undefined }
       }
-      return ''
+      return { ok: true, data: '' }
     })
 
     render(<SpecPage />, { wrapper: Wrapper })
@@ -364,7 +365,7 @@ describe('SpecPage', () => {
 
   it('should use first version when currentVersionId is not set', async () => {
     mockCurrentVersionId = {}
-    mockInvoke.mockResolvedValue('# Content')
+    mockInvoke.mockResolvedValue({ ok: true, data: '# Content' })
 
     render(<SpecPage />, { wrapper: Wrapper })
 
@@ -384,7 +385,7 @@ describe('SpecPage', () => {
     })
 
     it('should disable Generate button when PRODUCT.md is empty', async () => {
-      mockInvoke.mockResolvedValue('')
+      mockInvoke.mockResolvedValue({ ok: true, data: '' })
 
       render(<SpecPage />, { wrapper: Wrapper })
 
@@ -419,12 +420,12 @@ describe('SpecPage', () => {
       // Mock successful spec reads with content
       mockInvoke.mockImplementation(async (channel: string) => {
         if (channel === 'spec:read') {
-          return '# Spec Content'
+          return { ok: true, data: '# Spec Content' }
         }
         if (channel === 'scaffold:generate') {
           return { ok: true, data: { success: true } }
         }
-        return ''
+        return { ok: true, data: '' }
       })
 
       render(<SpecPage />, { wrapper: Wrapper })
@@ -465,12 +466,12 @@ describe('SpecPage', () => {
 
       mockInvoke.mockImplementation(async (channel: string) => {
         if (channel === 'spec:read') {
-          return '# Spec Content'
+          return { ok: true, data: '# Spec Content' }
         }
         if (channel === 'scaffold:generate') {
           return { ok: true, data: { success: true } }
         }
-        return ''
+        return { ok: true, data: '' }
       })
 
       render(<SpecPage />, { wrapper: Wrapper })
@@ -499,12 +500,12 @@ describe('SpecPage', () => {
     it('should subscribe to scaffold events when generating', async () => {
       mockInvoke.mockImplementation(async (channel: string) => {
         if (channel === 'spec:read') {
-          return '# Spec Content'
+          return { ok: true, data: '# Spec Content' }
         }
         if (channel === 'scaffold:generate') {
           return { ok: true, data: { success: true } }
         }
-        return ''
+        return { ok: true, data: '' }
       })
 
       render(<SpecPage />, { wrapper: Wrapper })
@@ -532,12 +533,12 @@ describe('SpecPage', () => {
     it('should show error when generation fails', async () => {
       mockInvoke.mockImplementation(async (channel: string) => {
         if (channel === 'spec:read') {
-          return '# Spec Content'
+          return { ok: true, data: '# Spec Content' }
         }
         if (channel === 'scaffold:generate') {
           return { ok: false, error: { message: 'Claude CLI not available', code: 'CLAUDE_UNAVAILABLE', name: 'ClaudeUnavailableError' } }
         }
-        return ''
+        return { ok: true, data: '' }
       })
 
       render(<SpecPage />, { wrapper: Wrapper })

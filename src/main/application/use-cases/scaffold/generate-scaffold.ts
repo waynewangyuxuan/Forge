@@ -12,7 +12,7 @@
 import * as path from 'path'
 import type { IProjectRepository, IVersionRepository } from '@shared/interfaces/repositories'
 import type { IFileSystemAdapter, IClaudeAdapter } from '@shared/interfaces/adapters'
-import { ValidationError, NotFoundError, ClaudeUnavailableError } from '@shared/errors'
+import { ValidationError, NotFoundError, ClaudeUnavailableError, serializeError } from '@shared/errors'
 import type {
   GenerateScaffoldInput,
   GenerateScaffoldResult,
@@ -26,7 +26,8 @@ import type {
 import { renderPrompt } from '../../../domain/engines/prompt-renderer'
 import { validateScaffold, parseScaffoldJson } from '../../../domain/engines/scaffold-validator'
 import { generateScaffoldFiles, generateClaudeMd } from '../../../domain/engines/scaffold-writer'
-import { loadScaffoldGeneratorPrompt, loadClaudeMdTemplate } from '../../../infrastructure/config-loader'
+import { createStateMachine } from '../../../domain/engines/state-machine'
+import { loadScaffoldGeneratorPrompt, loadClaudeMdTemplate, loadDevFlowStateMachine } from '../../../infrastructure/config-loader'
 
 /**
  * Dependencies for scaffold generation
@@ -49,6 +50,13 @@ export async function generateScaffold(
   deps: GenerateScaffoldDeps
 ): Promise<GenerateScaffoldResult> {
   const { projectRepo, versionRepo, fs, claude, emitProgress, emitCompleted, emitError } = deps
+
+  // Load state machine for dev flow
+  const stateMachineConfig = loadDevFlowStateMachine()
+  const stateMachine = createStateMachine(stateMachineConfig)
+
+  // Track the scaffolding state for use in both success and error paths
+  let scaffoldingState: string | null = null
 
   try {
     // Validate input
@@ -74,8 +82,25 @@ export async function generateScaffold(
       throw new ClaudeUnavailableError()
     }
 
-    // Update status to scaffolding
-    await versionRepo.updateStatus(input.versionId, { devStatus: 'scaffolding' })
+    // Determine the appropriate event based on current state
+    // GENERATE_SCAFFOLD: drafting → scaffolding
+    // REGENERATE: reviewing → scaffolding
+    const currentState = version.devStatus
+    let scaffoldingEvent: string
+    if (currentState === 'drafting') {
+      scaffoldingEvent = 'GENERATE_SCAFFOLD'
+    } else if (currentState === 'reviewing') {
+      scaffoldingEvent = 'REGENERATE'
+    } else {
+      throw new ValidationError(
+        `Cannot generate scaffold from state '${currentState}'. Must be in 'drafting' or 'reviewing' state.`,
+        'devStatus'
+      )
+    }
+
+    // Transition to scaffolding state using state machine
+    scaffoldingState = stateMachine.transition(currentState, scaffoldingEvent)
+    await versionRepo.updateStatus(input.versionId, { devStatus: scaffoldingState })
 
     // Phase 1: Read spec files
     emitProgress({ versionId: input.versionId, message: 'Reading spec files...' })
@@ -133,8 +158,11 @@ export async function generateScaffold(
     emitProgress({ versionId: input.versionId, message: 'Writing scaffold files...' })
     const filesWritten = await writeScaffoldFiles(fs, project.path, scaffold, project.name)
 
-    // Phase 6: Update status to reviewing
-    await versionRepo.updateStatus(input.versionId, { devStatus: 'reviewing' })
+    // Phase 6: Transition to reviewing state using state machine
+    // SCAFFOLD_SUCCESS: scaffolding → reviewing
+    // Use scaffoldingState (not hardcoded) to stay aligned with YAML config
+    const reviewingState = stateMachine.transition(scaffoldingState!, 'SCAFFOLD_SUCCESS')
+    await versionRepo.updateStatus(input.versionId, { devStatus: reviewingState })
 
     emitCompleted({ versionId: input.versionId })
 
@@ -144,19 +172,31 @@ export async function generateScaffold(
       filesWritten,
     }
   } catch (error) {
-    // Revert status to drafting on error
+    // Transition to error state using state machine if we transitioned to scaffolding
+    // SCAFFOLD_ERROR: scaffolding → error
+    // Note: If we failed before transitioning to scaffolding, we stay in current state
+    // Use scaffoldingState (not hardcoded) to stay aligned with YAML config
     try {
-      await versionRepo.updateStatus(input.versionId, { devStatus: 'drafting' })
+      if (scaffoldingState !== null) {
+        const errorState = stateMachine.transition(scaffoldingState, 'SCAFFOLD_ERROR')
+        await versionRepo.updateStatus(input.versionId, { devStatus: errorState })
+      }
     } catch {
       // Ignore status update error
     }
 
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    emitError({ versionId: input.versionId, error: errorMessage })
+    // Serialize error to preserve structured error codes
+    const serialized = serializeError(error)
+    emitError({
+      versionId: input.versionId,
+      error: serialized.message,
+      errorCode: serialized.code,
+    })
 
     return {
       success: false,
-      error: errorMessage,
+      error: serialized.message,
+      errorCode: serialized.code,
     }
   }
 }

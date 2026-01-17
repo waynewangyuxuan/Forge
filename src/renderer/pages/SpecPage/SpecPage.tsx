@@ -3,7 +3,7 @@
  * Edit and preview spec files (PRODUCT.md, TECHNICAL.md, REGULATION.md)
  */
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useServerStore, useVersions } from '../../stores/server.store'
 import { useRealtimeStore, useScaffold } from '../../stores/realtime.store'
@@ -60,6 +60,9 @@ export const SpecPage: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
 
+  // Ref to store scaffold subscription cleanup function
+  const unsubscribeRef = useRef<(() => void) | null>(null)
+
   // Check for unsaved changes
   const hasUnsaved = content[activeTab] !== savedContent[activeTab]
   useUnsavedChanges(hasUnsaved)
@@ -75,9 +78,14 @@ export const SpecPage: React.FC = () => {
       const result = await window.api.invoke('spec:read', {
         versionId: currentVersionId,
         file,
-      })
-      setContent((prev) => ({ ...prev, [file]: result }))
-      setSavedContent((prev) => ({ ...prev, [file]: result }))
+      }) as IPCResult<string>
+
+      if (result.ok) {
+        setContent((prev) => ({ ...prev, [file]: result.data }))
+        setSavedContent((prev) => ({ ...prev, [file]: result.data }))
+      } else {
+        setError(result.error.message)
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load file'
       setError(message)
@@ -164,6 +172,16 @@ export const SpecPage: React.FC = () => {
     }
   }, [scaffoldState?.status, scaffoldState?.error])
 
+  // Cleanup scaffold subscription on unmount
+  useEffect(() => {
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current()
+        unsubscribeRef.current = null
+      }
+    }
+  }, [])
+
   // Start scaffold generation
   const handleGenerateScaffold = async () => {
     if (!currentVersionId) return
@@ -196,8 +214,13 @@ export const SpecPage: React.FC = () => {
     setIsGenerating(true)
     setGenerateError(null)
 
-    // Subscribe to scaffold events
-    const unsubscribe = subscribeScaffold(currentVersionId)
+    // Clean up any existing subscription before creating new one
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current()
+    }
+
+    // Subscribe to scaffold events and store cleanup function
+    unsubscribeRef.current = subscribeScaffold(currentVersionId)
 
     try {
       const result = await window.api.invoke('scaffold:generate', {
@@ -214,9 +237,6 @@ export const SpecPage: React.FC = () => {
       setGenerateError(message)
       setIsGenerating(false)
     }
-
-    // Cleanup subscription when modal closes
-    return unsubscribe
   }
 
   // Close generate modal
@@ -227,6 +247,13 @@ export const SpecPage: React.FC = () => {
       )
       if (!confirmed) return
     }
+
+    // Clean up subscription
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current()
+      unsubscribeRef.current = null
+    }
+
     setShowGenerateModal(false)
     setIsGenerating(false)
     setGenerateError(null)

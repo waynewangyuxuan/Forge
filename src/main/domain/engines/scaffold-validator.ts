@@ -66,19 +66,40 @@ export function validateScaffold(scaffold: ScaffoldOutput): ScaffoldValidationRe
     return { valid: false, errors }
   }
 
-  // Collect all task IDs for dependency validation
+  // Collect all task IDs and milestone IDs for validation
   const allTaskIds = new Set<string>()
-  const taskIdToMilestone = new Map<string, string>()
+  const allMilestoneIds = new Set<string>()
 
-  // First pass: collect task IDs and check for duplicates
+  // First pass: collect IDs and check for duplicates and required fields
   scaffold.milestones.forEach((milestone, mIndex) => {
     const mPath = `milestones[${mIndex}]`
 
     if (!milestone.id) {
       errors.push(createError('MISSING_FIELD', `Missing milestone id`, `${mPath}.id`))
+    } else {
+      // Check for duplicate milestone IDs
+      if (allMilestoneIds.has(milestone.id)) {
+        errors.push(
+          createError(
+            'DUPLICATE_MILESTONE_ID',
+            `Duplicate milestone ID: ${milestone.id}`,
+            `${mPath}.id`
+          )
+        )
+      } else {
+        allMilestoneIds.add(milestone.id)
+      }
     }
+
     if (!milestone.name) {
       errors.push(createError('MISSING_FIELD', `Missing milestone name`, `${mPath}.name`))
+    }
+
+    // Validate milestone description is required
+    if (!milestone.description) {
+      errors.push(
+        createError('MISSING_FIELD', `Missing milestone description`, `${mPath}.description`)
+      )
     }
 
     if (!milestone.tasks || !Array.isArray(milestone.tasks)) {
@@ -106,7 +127,6 @@ export function validateScaffold(scaffold: ScaffoldOutput): ScaffoldValidationRe
         )
       } else {
         allTaskIds.add(task.id)
-        taskIdToMilestone.set(task.id, milestone.id)
       }
 
       if (!task.title) {
@@ -122,19 +142,62 @@ export function validateScaffold(scaffold: ScaffoldOutput): ScaffoldValidationRe
           createError('MISSING_FIELD', `Missing task verification`, `${tPath}.verification`, task.id)
         )
       }
+
+      // Validate depends field exists and is an array
+      if (task.depends === undefined || task.depends === null) {
+        errors.push(
+          createError('MISSING_FIELD', `Missing task depends`, `${tPath}.depends`, task.id)
+        )
+      } else if (!Array.isArray(task.depends)) {
+        errors.push(
+          createError(
+            'INVALID_TYPE',
+            `Task depends must be an array, got ${typeof task.depends}`,
+            `${tPath}.depends`,
+            task.id
+          )
+        )
+      } else {
+        // Validate each depends item is a non-empty string
+        task.depends.forEach((depId, depIndex) => {
+          if (typeof depId !== 'string') {
+            errors.push(
+              createError(
+                'INVALID_TYPE',
+                `Dependency must be a string, got ${typeof depId}`,
+                `${tPath}.depends[${depIndex}]`,
+                task.id
+              )
+            )
+          } else if (depId.trim() === '') {
+            errors.push(
+              createError(
+                'INVALID_DEPENDENCY',
+                `Empty dependency ID at index ${depIndex}`,
+                `${tPath}.depends[${depIndex}]`,
+                task.id
+              )
+            )
+          }
+        })
+      }
     })
   })
 
-  // Second pass: validate dependencies
+  // Second pass: validate dependency references exist
   scaffold.milestones.forEach((milestone, mIndex) => {
     if (!milestone.tasks) return
 
     milestone.tasks.forEach((task, tIndex) => {
-      if (!task.id || !task.depends) return
+      // Skip if no task ID or depends is not a valid array
+      if (!task.id || !Array.isArray(task.depends)) return
 
       const tPath = `milestones[${mIndex}].tasks[${tIndex}]`
 
       for (const depId of task.depends) {
+        // Skip non-string deps (already flagged in first pass)
+        if (typeof depId !== 'string') continue
+
         if (!allTaskIds.has(depId)) {
           errors.push(
             createError(
@@ -165,13 +228,15 @@ export function validateScaffold(scaffold: ScaffoldOutput): ScaffoldValidationRe
 function detectCircularDependencies(scaffold: ScaffoldOutput): ScaffoldValidationError[] {
   const errors: ScaffoldValidationError[] = []
 
-  // Build dependency graph
+  // Build dependency graph (only include valid deps)
   const graph = new Map<string, string[]>()
   for (const milestone of scaffold.milestones) {
     if (!milestone.tasks) continue
     for (const task of milestone.tasks) {
-      if (task.id && task.depends) {
-        graph.set(task.id, task.depends)
+      if (task.id && Array.isArray(task.depends)) {
+        // Filter to only valid string dependencies
+        const validDeps = task.depends.filter((dep): dep is string => typeof dep === 'string')
+        graph.set(task.id, validDeps)
       }
     }
   }

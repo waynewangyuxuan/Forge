@@ -153,8 +153,10 @@ function generateTaskSection(task: ScaffoldTask): string {
   lines.push(task.verification)
   lines.push('')
 
-  if (task.depends.length > 0) {
-    lines.push(`**Depends:** ${task.depends.join(', ')}`)
+  // Defensive: ensure depends is an array (should always be after validation)
+  const depends = Array.isArray(task.depends) ? task.depends : []
+  if (depends.length > 0) {
+    lines.push(`**Depends:** ${depends.join(', ')}`)
   } else {
     lines.push('**Depends:** none')
   }

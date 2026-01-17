@@ -333,6 +333,7 @@ export interface ScaffoldCompletedEvent {
 export interface ScaffoldErrorEvent {
   versionId: string
   error: string
+  errorCode?: string // Error code for structured error handling
 }
 
 export interface ExecutionProgressEvent {

@@ -60,8 +60,10 @@ export interface ScaffoldValidationError {
 export type ScaffoldValidationErrorCode =
   | 'INVALID_JSON'
   | 'MISSING_FIELD'
+  | 'INVALID_TYPE'
   | 'INVALID_TASK_ID'
   | 'DUPLICATE_TASK_ID'
+  | 'DUPLICATE_MILESTONE_ID'
   | 'INVALID_DEPENDENCY'
   | 'CIRCULAR_DEPENDENCY'
   | 'EMPTY_MILESTONES'
@@ -102,4 +104,5 @@ export interface GenerateScaffoldResult {
   scaffold?: ScaffoldOutput
   filesWritten?: string[] // List of files written
   error?: string
+  errorCode?: string // Error code for structured error handling
 }
