@@ -57,6 +57,48 @@ export interface PromptConfig {
 }
 
 /**
+ * Git hook commit configuration
+ */
+export interface GitHookCommitConfig {
+  message: string
+  files: string[]
+}
+
+/**
+ * Git hook push configuration
+ */
+export interface GitHookPushConfig {
+  strategy: 'auto' | 'manual' | 'disabled'
+}
+
+/**
+ * Git hook configuration
+ */
+export interface GitHookConfig {
+  enabled: boolean
+  commit: GitHookCommitConfig
+  push: GitHookPushConfig
+}
+
+/**
+ * Git hooks defaults
+ */
+export interface GitHooksDefaults {
+  pushStrategy: 'auto' | 'manual' | 'disabled'
+  stageAll: boolean
+  // Note: commitAuthor removed - git uses user's global config
+}
+
+/**
+ * Git hooks configuration file structure
+ */
+export interface GitHooksConfig {
+  version: number
+  hooks: Record<string, GitHookConfig>
+  defaults: GitHooksDefaults
+}
+
+/**
  * Config cache to avoid re-reading files
  */
 const configCache = new Map<string, unknown>()
@@ -199,4 +241,43 @@ export function loadTemplate(relativePath: string): string {
  */
 export function loadClaudeMdTemplate(): string {
   return loadTemplate('templates/claude-md.template.md')
+}
+
+/**
+ * Load git hooks configuration
+ */
+export function loadGitHooksConfig(): GitHooksConfig {
+  return loadYamlFile<GitHooksConfig>('git-operations.yaml')
+}
+
+/**
+ * Get hook config with defaults applied
+ * Hook values take precedence over defaults.
+ * stageAll only applies when hook doesn't specify files.
+ *
+ * @param hookName - Name of the hook (e.g., 'scaffold_complete', 'execute_milestone')
+ * @returns Resolved hook config or null if hook doesn't exist
+ */
+export function getResolvedHookConfig(hookName: string): GitHookConfig | null {
+  const config = loadGitHooksConfig()
+  const hook = config.hooks[hookName]
+  if (!hook) return null
+
+  const defaults = config.defaults
+  return {
+    ...hook,
+    push: {
+      strategy: hook.push?.strategy ?? defaults.pushStrategy ?? 'auto',
+    },
+    commit: {
+      ...hook.commit,
+      // Only use stageAll when hook doesn't specify files (preserves declarative intent)
+      files:
+        hook.commit.files.length > 0
+          ? hook.commit.files
+          : defaults.stageAll
+            ? ['.']
+            : [],
+    },
+  }
 }

@@ -426,3 +426,259 @@ Fixed a bug where IPC handler rejections caused the DeleteProjectModal UI to get
 When frontend code expects `IPCResult<T>`, the store layer should normalize IPC rejections into the same shape, providing a consistent contract for UI components.
 
 ---
+
+## 2026-01-15 - M4: Scaffold Generation - Complete
+
+### Summary
+Implemented AI-powered scaffold generation from spec files. Users can now generate TODO.md, CLAUDE.md, milestones, and context files from their PRODUCT.md and TECHNICAL.md specs.
+
+### Architecture Decisions
+| Decision | Choice | Reason |
+|----------|--------|--------|
+| AI Output Format | JSON | Easier to parse and validate than Markdown |
+| File Splitting | Code-driven | Don't rely on AI to create files, more controllable |
+| Document Layering | Index + Details | Load on demand during execution, save context |
+| Execution Protocol | Explicit Steps | Ensure Claude Code reads files as needed |
+
+### Completed Sections
+
+#### Section 1: Claude CLI Adapter
+- Created `src/main/infrastructure/adapters/claude.adapter.ts`
+- Implements `IClaudeAdapter` interface
+- Calls Claude Code CLI with prompt and working directory
+- Handles timeouts, errors, and output parsing
+
+#### Section 2: Domain Engines
+- Created `src/main/domain/engines/prompt-renderer.ts` - Template variable substitution
+- Created `src/main/domain/engines/scaffold-validator.ts` - JSON schema validation
+- Created `src/main/domain/engines/scaffold-writer.ts` - JSON → file generation
+
+#### Section 3: Config Files
+- Created `config/prompts/scaffold-generator.yaml` - Prompt template with variables
+- Created `config/templates/claude-md.template.md` - CLAUDE.md template
+
+#### Section 4: Use Case & IPC
+- Created `src/main/application/use-cases/scaffold/generate-scaffold.ts`
+- Created `src/main/infrastructure/ipc/scaffold.ipc.ts`
+- Emits progress, completed, and error events
+
+#### Section 5: State Machine Integration
+- Integrated with dev-flow state machine
+- Transitions: `drafting → scaffolding → reviewing`
+- Error handling: `scaffolding → error`
+- Regenerate support: `reviewing → scaffolding`
+
+#### Section 6: Frontend
+- Added "Generate Scaffold" button to SpecPage
+- Progress modal with streaming status messages
+- Error display with error codes
+- Auto-refresh after generation
+
+### Output Structure
+```
+META/
+├── CLAUDE.md           # Execution entry point
+├── TODO.md             # Task index
+├── MILESTONES/         # Per-milestone detail files
+│   ├── M1-*.md
+│   └── ...
+└── CONTEXT/            # Loaded on demand during execution
+    ├── architecture.md
+    └── conventions.md
+```
+
+### Tests
+- TypeCheck: ✓
+- Lint: ✓
+- Tests: ~750 passing
+
+---
+
+## 2026-01-17 - M4.1: Git Operations Module - Complete
+
+### Summary
+Implemented config-driven Git operations module for automatic commits after scaffold generation.
+
+### Completed Sections
+
+#### Section 1: Shared Layer - Types & Errors
+- Added Git error codes: `GIT_NOT_REPO`, `GIT_NO_REMOTE`, `GIT_OPERATION_FAILED`
+- Added error classes: `GitNotRepoError`, `GitNoRemoteError`, `GitOperationError`
+- Extended `IGitAdapter` interface with `status()`, `add()`, `hasRemote()`, `getRemoteUrl()`
+- Added `GitStatus` and `GitHookResult` types
+
+#### Section 2: Config Layer
+- Created `config/git-operations.yaml` with hooks for `scaffold_complete`, `spec_save`, `execute_milestone`
+- Added `GitHooksConfig` types to yaml-config-loader
+- Added `loadGitHooksConfig()` function
+
+#### Section 3: Infrastructure - GitAdapter
+- Installed `simple-git` package
+- Implemented `GitAdapter` with all `IGitAdapter` methods
+- Added singleton pattern with `getGitAdapter()`
+
+#### Section 4: Domain Engine
+- Created `git-operations.ts` domain engine
+- Implemented `executeGitHook()` with template variable substitution
+- Implemented `validateHookDefinition()` for config validation
+
+#### Section 5: Integration - Scaffold Generation
+- Added `git?: IGitAdapter` and `settings` to `GenerateScaffoldDeps`
+- Added Phase 5.5 in generate-scaffold.ts for git commit after file writes
+- Updated scaffold IPC handler to inject git adapter and settings
+- Git errors are non-fatal - warn and continue
+
+#### Section 6: Settings UI
+- Added Git Integration section to SettingsPage
+- Added toggle for `autoCommitOnMilestone`
+- Added toggle for `autoPush` (disabled when autoCommit is off)
+
+#### Section 7: Tests & Documentation
+- Created `tests/infrastructure/git.adapter.test.ts` (17 tests)
+- Created `tests/domain/git-operations.test.ts` (18 tests)
+- Updated M4.1.md acceptance criteria
+- Updated MILESTONES/META.md status
+
+### Key Features
+- Config-driven git hooks via `config/git-operations.yaml`
+- Template variable substitution in commit messages (e.g., `{{version_name}}`)
+- Push strategies: `auto`, `manual`, `disabled`
+- Settings override config push behavior
+- Non-fatal error handling - git failures don't break scaffold generation
+
+### Tests
+- TypeCheck: ✓
+- Lint: ✓ (pre-existing warnings only)
+- Tests: 758 passing
+
+---
+
+## 2026-01-17 - M4.1.1: Git Operations Bug Fixes & Enhancements - Complete
+
+### Summary
+Fixed gaps identified in M4.1 implementation and enhanced the settings UI.
+
+### Issues Fixed
+
+#### Section 1: Deleted Files Detection
+- Added `deleted: string[]` to `GitStatus` interface
+- Updated `GitAdapter.status()` to include `result.deleted`
+- Updated `executeGitHook()` hasChanges check to include deleted files
+- Now commits when only deleted files exist
+
+#### Section 3: Push Failure Visibility
+- Added `pushFailed?: boolean` and `pushError?: string` to `GitHookResult`
+- Updated `executeGitHook()` to return pushFailed flag instead of silently continuing
+- Updated scaffold progress message to show "(push failed - manual push needed)" when applicable
+
+#### Section 4: Config Validation
+- Added call to `validateHookDefinition()` before executing hook
+- Invalid configs now skip with clear message instead of failing silently
+
+#### Section 5: Settings UI Enhancement
+- Added `pushStrategy: 'auto' | 'manual' | 'disabled'` to Settings
+- Added `commitOnScaffold: boolean` to Settings (separate from milestone commits)
+- Added push strategy dropdown selector to SettingsPage
+- Added "Commit on scaffold generation" toggle
+- Removed redundant autoPush toggle (now controlled by pushStrategy)
+
+#### Section 6: Tests
+- Added test for deleted files in status (git.adapter.test.ts)
+- Added test for deleted files change detection (git-operations.test.ts)
+- Added test for pushFailed result (git-operations.test.ts)
+- Updated all mock status calls to include `deleted: []`
+
+### Tests
+- TypeCheck: ✓
+- Lint: ✓ (pre-existing warnings only)
+- Tests: 761 passing
+
+---
+
+## 2026-01-20 - M4.1.1 (Part 2): Wire Settings to Behavior - Complete
+
+### Summary
+Fixed remaining gaps where new settings (`commitOnScaffold`, `pushStrategy`) were defined in UI but not wired to actual behavior.
+
+### Issues Fixed
+
+#### Settings Not Wired
+- `commitOnScaffold` toggle had no effect - scaffold still gated on `autoCommitOnMilestone`
+- `pushStrategy` dropdown was unused - engine still used `autoPush` boolean
+- Duplicate hook validation in generate-scaffold.ts
+
+#### Solution: Generic commitEnabled Flag
+- Changed `ExecuteGitHookOptions` interface to use explicit flags instead of settings object:
+  - `commitEnabled: boolean` - Caller-derived from appropriate setting
+  - `pushStrategy: PushStrategy` - From settings with backward compat fallback
+- Scaffold passes `commitOnScaffold`, milestone (future) passes `autoCommitOnMilestone`
+
+#### Backward Compatibility
+- IPC layer derives `pushStrategy` from legacy `autoPush` when missing:
+  ```typescript
+  const pushStrategy = settings.pushStrategy ?? (settings.autoPush ? 'auto' : 'disabled')
+  ```
+
+#### Config Defaults
+- Merged config defaults (from git-operations.yaml) into hook before execution
+- Hook values take precedence over defaults
+
+### Files Changed
+- `src/main/domain/engines/git-operations.ts` - New interface, use commitEnabled/pushStrategy
+- `src/main/application/use-cases/scaffold/generate-scaffold.ts` - Pass flags, merge defaults
+- `src/main/infrastructure/ipc/scaffold.ipc.ts` - Backward compat fallback
+- `tests/domain/git-operations.test.ts` - Updated for new interface
+
+### Tests
+- TypeCheck: ✓
+- Tests: 762 passing
+
+---
+
+## 2026-01-20 - M4.1.2: Git Operations Review Fixes - Complete
+
+### Summary
+Fixed issues identified in code review of M4.1.1.
+
+### Issues Fixed
+
+#### 1. stageAll Override Bug
+**Problem**: `defaults.stageAll` unconditionally replaced hook's explicit files, breaking declarative intent.
+```typescript
+// Bug: ignores hook's explicit files when stageAll=true
+files: defaults.stageAll ? ['.'] : hookDef.commit.files
+```
+
+**Fix**: Only use stageAll as fallback when hook doesn't specify files:
+```typescript
+files: hook.commit.files.length > 0
+  ? hook.commit.files
+  : (defaults.stageAll ? ['.'] : [])
+```
+
+#### 2. Defaults Only for Scaffold
+**Problem**: Config defaults merge was inline in generate-scaffold.ts. Future callers (milestone hooks) would duplicate this logic.
+
+**Fix**: Extracted shared `getResolvedHookConfig(hookName)` helper in yaml-config-loader.ts that:
+- Returns hook config with defaults applied
+- Honors hook values over defaults
+- Applies stageAll only as fallback
+
+#### 3. commitAuthor Dead Config
+**Problem**: `defaults.commitAuthor` existed in config but was never used. Git uses user's global config for author which is the correct behavior.
+
+**Fix**: Removed `commitAuthor` from:
+- `config/git-operations.yaml`
+- `GitHooksDefaults` interface
+
+### Files Changed
+- `src/main/infrastructure/config-loader/yaml-config-loader.ts` - Added `getResolvedHookConfig()`, removed commitAuthor
+- `src/main/application/use-cases/scaffold/generate-scaffold.ts` - Simplified to use helper
+- `config/git-operations.yaml` - Removed commitAuthor field
+- `tests/infrastructure/config-loader.test.ts` - Added 7 new tests for getResolvedHookConfig
+
+### Tests
+- TypeCheck: ✓
+- Tests: 769 passing
+
+---

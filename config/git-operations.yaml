@@ -1,0 +1,43 @@
+# Git operation hooks - declarative git actions tied to lifecycle events
+# Each hook defines commit/push behavior for specific lifecycle events
+
+version: 1
+
+hooks:
+  # After scaffold generation completes successfully
+  scaffold_complete:
+    enabled: true
+    commit:
+      message: "chore(scaffold): generate task breakdown for {{version_name}}"
+      files:
+        - "META/"
+    push:
+      strategy: auto  # auto | manual | disabled
+
+  # After saving spec files (disabled by default - may be too frequent)
+  spec_save:
+    enabled: false
+    commit:
+      message: "docs: update spec files"
+      files:
+        - "META/CORE/"
+    push:
+      strategy: manual
+
+  # After milestone execution completes
+  execute_milestone:
+    enabled: true
+    commit:
+      message: "feat({{milestone_name}}): complete milestone"
+      files:
+        - "."  # All files
+    push:
+      strategy: auto
+
+defaults:
+  # Default push strategy when not specified in hook
+  pushStrategy: auto
+
+  # Whether to stage all changes or only specified files
+  # Note: only applies when hook doesn't specify files (fallback behavior)
+  stageAll: false

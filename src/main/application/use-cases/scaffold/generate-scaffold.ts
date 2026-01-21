@@ -11,7 +11,8 @@
 
 import * as path from 'path'
 import type { IProjectRepository, IVersionRepository } from '@shared/interfaces/repositories'
-import type { IFileSystemAdapter, IClaudeAdapter } from '@shared/interfaces/adapters'
+import type { IFileSystemAdapter, IClaudeAdapter, IGitAdapter } from '@shared/interfaces/adapters'
+import type { Settings } from '@shared/types/runtime.types'
 import { ValidationError, NotFoundError, ClaudeUnavailableError, serializeError } from '@shared/errors'
 import type {
   GenerateScaffoldInput,
@@ -27,7 +28,8 @@ import { renderPrompt } from '../../../domain/engines/prompt-renderer'
 import { validateScaffold, parseScaffoldJson } from '../../../domain/engines/scaffold-validator'
 import { generateScaffoldFiles, generateClaudeMd } from '../../../domain/engines/scaffold-writer'
 import { createStateMachine } from '../../../domain/engines/state-machine'
-import { loadScaffoldGeneratorPrompt, loadClaudeMdTemplate, loadDevFlowStateMachine } from '../../../infrastructure/config-loader'
+import { loadScaffoldGeneratorPrompt, loadClaudeMdTemplate, loadDevFlowStateMachine, getResolvedHookConfig } from '../../../infrastructure/config-loader'
+import { executeGitHook, validateHookDefinition } from '../../../domain/engines/git-operations'
 
 /**
  * Dependencies for scaffold generation
@@ -37,6 +39,8 @@ export interface GenerateScaffoldDeps {
   versionRepo: IVersionRepository
   fs: IFileSystemAdapter
   claude: IClaudeAdapter
+  git?: IGitAdapter // Optional - graceful degradation if not provided
+  settings?: Pick<Settings, 'commitOnScaffold' | 'pushStrategy'> // Git settings
   emitProgress: (event: ScaffoldProgressEvent) => void
   emitCompleted: (event: ScaffoldCompletedEvent) => void
   emitError: (event: ScaffoldErrorEvent) => void
@@ -157,6 +161,63 @@ export async function generateScaffold(
     // Phase 5: Write files
     emitProgress({ versionId: input.versionId, message: 'Writing scaffold files...' })
     const filesWritten = await writeScaffoldFiles(fs, project.path, scaffold, project.name)
+
+    // Phase 5.5: Git commit (non-blocking)
+    if (deps.git && deps.settings) {
+      emitProgress({ versionId: input.versionId, message: 'Committing scaffold files...' })
+
+      try {
+        // Get hook config with defaults applied
+        const mergedHook = getResolvedHookConfig('scaffold_complete')
+
+        if (mergedHook) {
+          // Validate hook structure
+          if (!validateHookDefinition(mergedHook)) {
+            emitProgress({
+              versionId: input.versionId,
+              message: 'Git skipped: invalid hook configuration',
+            })
+          } else {
+            const gitResult = await executeGitHook({
+              hookDefinition: mergedHook,
+              context: {
+                projectPath: project.path,
+                versionName: version.versionName,
+                projectName: project.name,
+              },
+              commitEnabled: deps.settings.commitOnScaffold ?? true,
+              pushStrategy: deps.settings.pushStrategy ?? 'auto',
+              git: deps.git,
+            })
+
+            // Only compute pushStatus when not skipped
+            if (gitResult.success && !gitResult.skipped) {
+              const pushStatus = gitResult.pushed
+                ? ' (pushed)'
+                : gitResult.pushFailed
+                  ? ' (push failed - manual push needed)'
+                  : ''
+              emitProgress({
+                versionId: input.versionId,
+                message: `Committed: ${gitResult.commitHash?.slice(0, 7)}${pushStatus}`,
+              })
+            } else if (gitResult.skipped) {
+              emitProgress({
+                versionId: input.versionId,
+                message: `Git skipped: ${gitResult.skippedReason}`,
+              })
+            }
+          }
+        }
+      } catch (error) {
+        // Git errors are non-fatal - just log
+        console.warn('Git hook failed:', error)
+        emitProgress({
+          versionId: input.versionId,
+          message: 'Git commit skipped due to error',
+        })
+      }
+    }
 
     // Phase 6: Transition to reviewing state using state machine
     // SCAFFOLD_SUCCESS: scaffolding → reviewing
