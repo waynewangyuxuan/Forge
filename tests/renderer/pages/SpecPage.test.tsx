@@ -48,6 +48,22 @@ vi.mock('../../../src/renderer/hooks/useUnsavedChanges', () => ({
   useUnsavedChanges: vi.fn(),
 }))
 
+// Mock realtime store for scaffold state
+let mockScaffoldState: { status: string; messages: string[]; error?: string } | undefined = undefined
+const mockSubscribeScaffold = vi.fn().mockReturnValue(() => {})
+const mockClearScaffold = vi.fn()
+
+vi.mock('../../../src/renderer/stores/realtime.store', () => ({
+  useRealtimeStore: (selector: (state: Record<string, unknown>) => unknown) => {
+    const state = {
+      subscribeScaffold: mockSubscribeScaffold,
+      clearScaffold: mockClearScaffold,
+    }
+    return selector(state)
+  },
+  useScaffold: () => mockScaffoldState,
+}))
+
 // Mock CodeMirror for MarkdownEditor
 vi.mock('@codemirror/view', () => {
   const mockView = {
@@ -99,8 +115,9 @@ vi.mock('react-markdown', () => ({
 
 // Mock window.api
 const mockInvoke = vi.fn()
+const mockOn = vi.fn().mockReturnValue(() => {})
 Object.defineProperty(window, 'api', {
-  value: { invoke: mockInvoke },
+  value: { invoke: mockInvoke, on: mockOn },
   writable: true,
 })
 
@@ -113,7 +130,8 @@ const Wrapper = ({ children }: { children: React.ReactNode }) => (
 describe('SpecPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockInvoke.mockResolvedValue('# Test Content')
+    // Default mock returns IPCResult envelope format
+    mockInvoke.mockResolvedValue({ ok: true, data: '# Test Content' })
     // Reset mock data
     mockVersions = [
       {
@@ -127,6 +145,8 @@ describe('SpecPage', () => {
       },
     ]
     mockCurrentVersionId = { 'proj-123': 'ver-1' }
+    // Reset scaffold state
+    mockScaffoldState = undefined
   })
 
   it('should render page title', async () => {
@@ -229,7 +249,7 @@ describe('SpecPage', () => {
   })
 
   it('should have Save button disabled when no changes', async () => {
-    mockInvoke.mockResolvedValue('# Test Content')
+    mockInvoke.mockResolvedValue({ ok: true, data: '# Test Content' })
 
     render(<SpecPage />, { wrapper: Wrapper })
 
@@ -248,7 +268,7 @@ describe('SpecPage', () => {
   })
 
   it('should render tabs and allow switching', async () => {
-    mockInvoke.mockResolvedValue('# Test Content')
+    mockInvoke.mockResolvedValue({ ok: true, data: '# Test Content' })
 
     render(<SpecPage />, { wrapper: Wrapper })
 
@@ -272,12 +292,12 @@ describe('SpecPage', () => {
     mockInvoke.mockImplementation(async (channel: string, args: Record<string, unknown>) => {
       if (channel === 'spec:read') {
         loadCallCount++
-        return '# Original Content'
+        return { ok: true, data: '# Original Content' }
       }
       if (channel === 'spec:save') {
-        return undefined
+        return { ok: true, data: undefined }
       }
-      return ''
+      return { ok: true, data: '' }
     })
 
     render(<SpecPage />, { wrapper: Wrapper })
@@ -345,13 +365,202 @@ describe('SpecPage', () => {
 
   it('should use first version when currentVersionId is not set', async () => {
     mockCurrentVersionId = {}
-    mockInvoke.mockResolvedValue('# Content')
+    mockInvoke.mockResolvedValue({ ok: true, data: '# Content' })
 
     render(<SpecPage />, { wrapper: Wrapper })
 
     // Should still render because first version is used as fallback
     await waitFor(() => {
       expect(screen.getByText('Spec')).toBeInTheDocument()
+    })
+  })
+
+  describe('Generate Scaffold', () => {
+    it('should render Generate Scaffold button', async () => {
+      render(<SpecPage />, { wrapper: Wrapper })
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Generate Scaffold' })).toBeInTheDocument()
+      })
+    })
+
+    it('should disable Generate button when PRODUCT.md is empty', async () => {
+      mockInvoke.mockResolvedValue({ ok: true, data: '' })
+
+      render(<SpecPage />, { wrapper: Wrapper })
+
+      await waitFor(() => {
+        const generateButton = screen.getByRole('button', { name: 'Generate Scaffold' })
+        expect(generateButton).toBeDisabled()
+      })
+    })
+
+    it('should disable Generate button when devStatus is not drafting', async () => {
+      mockVersions = [
+        {
+          id: 'ver-1',
+          projectId: 'proj-123',
+          versionName: 'v1.0',
+          branchName: 'main',
+          devStatus: 'reviewing', // Not drafting
+          runtimeStatus: 'idle',
+          createdAt: new Date().toISOString(),
+        },
+      ]
+
+      render(<SpecPage />, { wrapper: Wrapper })
+
+      await waitFor(() => {
+        const generateButton = screen.getByRole('button', { name: 'Generate Scaffold' })
+        expect(generateButton).toBeDisabled()
+      })
+    })
+
+    it('should open modal when Generate button is clicked', async () => {
+      // Mock successful spec reads with content
+      mockInvoke.mockImplementation(async (channel: string) => {
+        if (channel === 'spec:read') {
+          return { ok: true, data: '# Spec Content' }
+        }
+        if (channel === 'scaffold:generate') {
+          return { ok: true, data: { success: true } }
+        }
+        return { ok: true, data: '' }
+      })
+
+      render(<SpecPage />, { wrapper: Wrapper })
+
+      // Wait for PRODUCT.md load
+      await waitFor(() => {
+        expect(mockInvoke).toHaveBeenCalledWith('spec:read', expect.objectContaining({ file: 'PRODUCT.md' }))
+      })
+
+      // Switch to TECHNICAL tab to load that content too (required for Generate)
+      fireEvent.click(screen.getByText('TECHNICAL'))
+      await waitFor(() => {
+        expect(mockInvoke).toHaveBeenCalledWith('spec:read', expect.objectContaining({ file: 'TECHNICAL.md' }))
+      })
+
+      // Switch back to PRODUCT tab
+      fireEvent.click(screen.getByText('PRODUCT'))
+
+      // Wait for button to be enabled
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Generate Scaffold' })).toBeEnabled()
+      })
+
+      // Click generate button
+      fireEvent.click(screen.getByRole('button', { name: 'Generate Scaffold' }))
+
+      // Modal should open
+      await waitFor(() => {
+        expect(screen.getByText('Generating Scaffold')).toBeInTheDocument()
+      })
+    })
+
+    it('should show progress messages during generation', async () => {
+      mockScaffoldState = {
+        status: 'generating',
+        messages: ['Reading spec files...', 'Generating with AI...'],
+      }
+
+      mockInvoke.mockImplementation(async (channel: string) => {
+        if (channel === 'spec:read') {
+          return { ok: true, data: '# Spec Content' }
+        }
+        if (channel === 'scaffold:generate') {
+          return { ok: true, data: { success: true } }
+        }
+        return { ok: true, data: '' }
+      })
+
+      render(<SpecPage />, { wrapper: Wrapper })
+
+      // Load both required tabs
+      await waitFor(() => {
+        expect(mockInvoke).toHaveBeenCalledWith('spec:read', expect.objectContaining({ file: 'PRODUCT.md' }))
+      })
+      fireEvent.click(screen.getByText('TECHNICAL'))
+      await waitFor(() => {
+        expect(mockInvoke).toHaveBeenCalledWith('spec:read', expect.objectContaining({ file: 'TECHNICAL.md' }))
+      })
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Generate Scaffold' })).toBeEnabled()
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Generate Scaffold' }))
+
+      await waitFor(() => {
+        expect(screen.getByText('Reading spec files...')).toBeInTheDocument()
+        expect(screen.getByText('Generating with AI...')).toBeInTheDocument()
+      })
+    })
+
+    it('should subscribe to scaffold events when generating', async () => {
+      mockInvoke.mockImplementation(async (channel: string) => {
+        if (channel === 'spec:read') {
+          return { ok: true, data: '# Spec Content' }
+        }
+        if (channel === 'scaffold:generate') {
+          return { ok: true, data: { success: true } }
+        }
+        return { ok: true, data: '' }
+      })
+
+      render(<SpecPage />, { wrapper: Wrapper })
+
+      // Load both required tabs
+      await waitFor(() => {
+        expect(mockInvoke).toHaveBeenCalledWith('spec:read', expect.objectContaining({ file: 'PRODUCT.md' }))
+      })
+      fireEvent.click(screen.getByText('TECHNICAL'))
+      await waitFor(() => {
+        expect(mockInvoke).toHaveBeenCalledWith('spec:read', expect.objectContaining({ file: 'TECHNICAL.md' }))
+      })
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Generate Scaffold' })).toBeEnabled()
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Generate Scaffold' }))
+
+      await waitFor(() => {
+        expect(mockSubscribeScaffold).toHaveBeenCalledWith('ver-1')
+      })
+    })
+
+    it('should show error when generation fails', async () => {
+      mockInvoke.mockImplementation(async (channel: string) => {
+        if (channel === 'spec:read') {
+          return { ok: true, data: '# Spec Content' }
+        }
+        if (channel === 'scaffold:generate') {
+          return { ok: false, error: { message: 'Claude CLI not available', code: 'CLAUDE_UNAVAILABLE', name: 'ClaudeUnavailableError' } }
+        }
+        return { ok: true, data: '' }
+      })
+
+      render(<SpecPage />, { wrapper: Wrapper })
+
+      // Load both required tabs
+      await waitFor(() => {
+        expect(mockInvoke).toHaveBeenCalledWith('spec:read', expect.objectContaining({ file: 'PRODUCT.md' }))
+      })
+      fireEvent.click(screen.getByText('TECHNICAL'))
+      await waitFor(() => {
+        expect(mockInvoke).toHaveBeenCalledWith('spec:read', expect.objectContaining({ file: 'TECHNICAL.md' }))
+      })
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Generate Scaffold' })).toBeEnabled()
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Generate Scaffold' }))
+
+      await waitFor(() => {
+        expect(screen.getByText('Claude CLI not available')).toBeInTheDocument()
+      })
     })
   })
 })

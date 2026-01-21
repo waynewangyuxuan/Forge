@@ -80,13 +80,20 @@ export interface RuntimeConfigInput {
 }
 
 /**
+ * Push strategy for git operations
+ */
+export type PushStrategy = 'auto' | 'manual' | 'disabled'
+
+/**
  * Application settings
  */
 export interface Settings {
   projectsLocation: string // Default location for new projects
   cloneRoot: string // GitHub clone root directory
   initGit: boolean
-  autoCommitOnMilestone: boolean
-  autoPush: boolean
+  commitOnScaffold: boolean // Commit when scaffold generation completes
+  autoCommitOnMilestone: boolean // Commit when milestone completes
+  pushStrategy: PushStrategy // auto: push after commit, manual: user pushes, disabled: never push
+  autoPush: boolean // Legacy - use pushStrategy instead. Kept for backwards compatibility
   defaultEditor: string // e.g., "code" for VSCode
 }

@@ -9,14 +9,16 @@
 ```
 forge/
 │
-├── config/                           # 配置文件 (YAML) - 外部化数据
+├── config/                           # 配置文件 - 外部化数据
 │   ├── state-machines/
 │   │   ├── dev-flow.yaml             # 开发流状态机
 │   │   └── runtime-flow.yaml         # 运行流状态机
 │   ├── prompts/
-│   │   ├── scaffold-generator.yaml   # Spec → TODO.md
+│   │   ├── scaffold-generator.yaml   # Spec → JSON scaffold
 │   │   ├── code-executor.yaml        # 单任务执行
 │   │   └── dashboard-generator.yaml  # 生成 Dashboard
+│   ├── templates/
+│   │   └── claude-md.template.md     # CLAUDE.md 模板
 │   └── execution.yaml                # 全局执行配置
 │
 ├── src/
@@ -32,7 +34,9 @@ forge/
 │   │   │   │
 │   │   │   ├── engines/              # 逻辑引擎 (纯函数)
 │   │   │   │   ├── state-machine.ts
-│   │   │   │   ├── prompt-renderer.ts
+│   │   │   │   ├── prompt-renderer.ts   # 模板变量替换
+│   │   │   │   ├── scaffold-validator.ts # JSON 结构验证
+│   │   │   │   ├── scaffold-writer.ts    # JSON → 文件
 │   │   │   │   ├── todo-parser.ts
 │   │   │   │   ├── log-parser.ts
 │   │   │   │   └── plan-calculator.ts
@@ -102,7 +106,7 @@ forge/
 │   │   │
 │   │   ├── infrastructure/           # Infrastructure Layer - 适配器
 │   │   │   ├── adapters/
-│   │   │   │   ├── claude-cli.adapter.ts
+│   │   │   │   ├── claude.adapter.ts      # Claude Code CLI 调用
 │   │   │   │   ├── file-system.adapter.ts
 │   │   │   │   ├── scheduler.adapter.ts
 │   │   │   │   └── keychain.adapter.ts
@@ -121,6 +125,7 @@ forge/
 │   │   │       ├── project.ipc.ts
 │   │   │       ├── version.ipc.ts
 │   │   │       ├── spec.ipc.ts
+│   │   │       ├── scaffold.ipc.ts   # scaffold:* handlers
 │   │   │       ├── review.ipc.ts
 │   │   │       ├── execution.ipc.ts
 │   │   │       ├── runtime.ipc.ts
@@ -190,6 +195,7 @@ forge/
 │   │   │   ├── execution.types.ts    # Execution, Task 等类型
 │   │   │   ├── runtime.types.ts      # RuntimeConfig, Run 等类型
 │   │   │   ├── credential.types.ts   # Credential 类型
+│   │   │   ├── scaffold.types.ts     # ScaffoldOutput, 验证结果等类型
 │   │   │   └── ipc.types.ts          # IPC 通道输入输出类型
 │   │   │
 │   │   ├── interfaces/               # 接口定义 (后端用)
@@ -250,8 +256,17 @@ forge/
 │   │   ├── TECHNICAL.md              # How - 技术实现
 │   │   └── REGULATION.md             # Rules - 开发规范
 │   │
+│   ├── MILESTONES/                   # 任务详情 (AI 生成)
+│   │   ├── M1-*.md                   # Milestone 1 任务详情
+│   │   ├── M2-*.md                   # Milestone 2 任务详情
+│   │   └── ...
+│   │
+│   ├── CONTEXT/                      # 执行上下文 (AI 生成)
+│   │   ├── architecture.md           # 架构决策
+│   │   └── conventions.md            # 代码规范
+│   │
 │   ├── CLAUDE.md                     # AI 执行入口 (AI 生成)
-│   ├── TODO.md                       # 任务清单 (AI 生成)
+│   ├── TODO.md                       # 任务索引 (AI 生成)
 │   ├── PROGRESS.md                   # 进度摘要 (AI 更新)
 │   └── DASHBOARD.yaml                # Dashboard 配置 (AI 生成)
 │
@@ -275,8 +290,10 @@ forge/
 | `PRODUCT.md` | 用户 | 用户 | 定义做什么 |
 | `TECHNICAL.md` | 用户 | 用户 | 定义怎么做 |
 | `REGULATION.md` | 用户/AI | 用户/AI | 开发规范 |
-| `CLAUDE.md` | AI | AI | Claude 执行入口指令 |
-| `TODO.md` | AI | AI | 任务分解和状态 |
+| `CLAUDE.md` | AI | AI | Claude 执行入口指令（~800 tokens） |
+| `TODO.md` | AI | AI | 任务索引（~1K tokens） |
+| `MILESTONES/*.md` | AI | AI | 任务详情（按需加载） |
+| `CONTEXT/*.md` | AI | AI | 架构和规范（按需加载） |
 | `PROGRESS.md` | AI | AI | 已完成工作摘要 |
 | `DASHBOARD.yaml` | AI | AI | Dashboard 指标配置 |
 | `run.sh` | AI | 用户/AI | 项目运行脚本 |

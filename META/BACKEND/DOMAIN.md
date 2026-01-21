@@ -129,7 +129,60 @@ getAvailableEvents('reviewing') → ['REGENERATE', 'APPROVE', 'EDIT_SPEC']
 - 复杂场景（条件、循环）可以用 Handlebars
 - 变量缺失时抛出明确错误
 
-### 3.3 TodoParser Engine
+### 3.3 ScaffoldValidator Engine
+
+**职责**：验证 AI 生成的 Scaffold JSON
+
+**输入**：
+- ScaffoldOutput JSON
+
+**输出**：
+- ScaffoldValidationResult { valid, errors }
+
+**验证规则**：
+
+| 规则 | 说明 |
+|------|------|
+| 结构验证 | 必填字段存在 |
+| 任务 ID 唯一性 | 没有重复的任务 ID |
+| 依赖有效性 | depends 引用的任务存在 |
+| 循环依赖检测 | 没有 A→B→C→A 的依赖链 |
+
+**核心方法**：
+
+| 方法 | 作用 |
+|------|------|
+| `validateScaffold(scaffold)` | 完整验证 |
+| `parseScaffoldJson(input)` | 从字符串解析 JSON |
+
+### 3.4 ScaffoldWriter Engine
+
+**职责**：将 ScaffoldOutput JSON 转换为文件内容
+
+**输入**：
+- ScaffoldOutput
+- 选项（项目名等）
+
+**输出**：
+- 文件数组 `{ path, content }[]`
+
+**生成文件**：
+
+| 文件 | 内容 |
+|------|------|
+| META/TODO.md | 任务索引，轻量级 |
+| META/MILESTONES/M1-*.md | 每个 Milestone 的详细任务 |
+| META/CONTEXT/architecture.md | 架构决策 |
+| META/CONTEXT/conventions.md | 代码规范 |
+
+**核心方法**：
+
+| 方法 | 作用 |
+|------|------|
+| `generateScaffoldFiles(scaffold, options)` | 生成所有文件 |
+| `generateClaudeMd(template, scaffold, projectName)` | 生成 CLAUDE.md |
+
+### 3.5 TodoParser Engine (M5+)
 
 **职责**：TODO.md 内容 → 结构化执行计划
 

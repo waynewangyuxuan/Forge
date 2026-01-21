@@ -60,11 +60,17 @@ src/shared/types/
 |------|------|------|------|
 | `spec:read` | `{ versionId, file }` | `string` | 读取 Spec 文件内容 |
 | `spec:save` | `{ versionId, file, content }` | `void` | 保存 Spec 文件 |
-| `spec:generateScaffold` | `{ versionId }` | `void` | 触发 Scaffold 生成（异步，通过 Event 返回进度） |
 
 `file` 可选值：`'PRODUCT.md' | 'TECHNICAL.md' | 'REGULATION.md'`
 
-### 2.4 Review
+### 2.4 Scaffold
+
+| 通道 | 输入 | 输出 | 说明 |
+|------|------|------|------|
+| `scaffold:generate` | `{ versionId }` | `GenerateScaffoldResult` | 触发 Scaffold 生成（同时通过 Event 推送进度） |
+| `scaffold:checkClaudeAvailable` | `void` | `{ available, version }` | 检查 Claude CLI 可用性 |
+
+### 2.5 Review
 
 | 通道 | 输入 | 输出 | 说明 |
 |------|------|------|------|
@@ -76,7 +82,7 @@ src/shared/types/
 | `review:regenerate` | `{ versionId }` | `void` | 基于 feedback 重新生成 |
 | `review:approve` | `{ versionId }` | `void` | 确认通过，进入 Ready 状态 |
 
-### 2.5 Execution
+### 2.6 Execution
 
 | 通道 | 输入 | 输出 | 说明 |
 |------|------|------|------|
@@ -90,7 +96,7 @@ src/shared/types/
 
 `options` 可包含：`{ commitStrategy, openInEditor }`
 
-### 2.6 Runtime
+### 2.7 Runtime
 
 | 通道 | 输入 | 输出 | 说明 |
 |------|------|------|------|
@@ -104,14 +110,14 @@ src/shared/types/
 
 `config` 结构：`{ triggerType, cronExpression?, credentials }`
 
-### 2.7 Dashboard
+### 2.8 Dashboard
 
 | 通道 | 输入 | 输出 | 说明 |
 |------|------|------|------|
 | `dashboard:getConfig` | `{ versionId }` | `DashboardConfig \| null` | 获取 DASHBOARD.yaml 配置 |
 | `dashboard:getMetrics` | `{ versionId }` | `MetricValues` | 获取解析后的指标数据 |
 
-### 2.8 Credentials
+### 2.9 Credentials
 
 | 通道 | 输入 | 输出 | 说明 |
 |------|------|------|------|
@@ -120,7 +126,7 @@ src/shared/types/
 | `credentials:update` | `{ id, value }` | `void` | 更新凭证值 |
 | `credentials:delete` | `{ id }` | `void` | 删除凭证 |
 
-### 2.9 Shell
+### 2.10 Shell
 
 | 通道 | 输入 | 输出 | 说明 |
 |------|------|------|------|
@@ -128,7 +134,7 @@ src/shared/types/
 | `shell:openFolder` | `{ path }` | `void` | 用 Finder/Explorer 打开目录 |
 | `shell:openExternal` | `{ url }` | `void` | 打开外部链接 |
 
-### 2.10 System
+### 2.11 System
 
 | 通道 | 输入 | 输出 | 说明 |
 |------|------|------|------|
@@ -138,7 +144,7 @@ src/shared/types/
 | `system:checkClaude` | `void` | `{ available, version? }` | 检查 Claude CLI 是否可用 |
 | `system:getAppInfo` | `void` | `{ version, dataPath }` | 获取应用信息 |
 
-### 2.11 GitHub
+### 2.12 GitHub
 
 | 通道 | 输入 | 输出 | 说明 |
 |------|------|------|------|

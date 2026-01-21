@@ -8,6 +8,7 @@ import { registerVersionHandlers } from './version.ipc'
 import { registerSystemHandlers } from './system.ipc'
 import { registerGitHubHandlers } from './github.ipc'
 import { registerSpecHandlers } from './spec.ipc'
+import { registerScaffoldHandlers } from './scaffold.ipc'
 
 /**
  * Register all IPC handlers
@@ -19,6 +20,7 @@ export function registerAllIPCHandlers(): void {
   registerSystemHandlers()
   registerGitHubHandlers()
   registerSpecHandlers()
+  registerScaffoldHandlers()
 
   // Future handlers will be registered here:
   // registerReviewHandlers()
@@ -35,3 +37,4 @@ export { registerVersionHandlers } from './version.ipc'
 export { registerSystemHandlers } from './system.ipc'
 export { registerGitHubHandlers } from './github.ipc'
 export { registerSpecHandlers } from './spec.ipc'
+export { registerScaffoldHandlers } from './scaffold.ipc'
