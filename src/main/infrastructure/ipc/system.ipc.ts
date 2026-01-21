@@ -14,6 +14,7 @@ import type {
   SystemSelectFolderOutput,
   SystemCheckClaudeOutput,
   SystemAppInfoOutput,
+  IPCResult,
 } from '@shared/types/ipc.types'
 import type { Settings } from '@shared/types/runtime.types'
 
@@ -27,25 +28,27 @@ const settingsRepo = new SQLiteSettingsRepository()
  */
 export function registerSystemHandlers(): void {
   // system:getSettings - Get application settings
-  ipcMain.handle('system:getSettings', async () => {
+  ipcMain.handle('system:getSettings', async (): Promise<IPCResult<Settings>> => {
     try {
-      return await settingsRepo.getAll()
+      const data = await settingsRepo.getAll()
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // system:updateSettings - Update application settings
-  ipcMain.handle('system:updateSettings', async (_event, updates: Partial<Settings>) => {
+  ipcMain.handle('system:updateSettings', async (_event, updates: Partial<Settings>): Promise<IPCResult<Settings>> => {
     try {
-      return await settingsRepo.update(updates)
+      const data = await settingsRepo.update(updates)
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // system:selectFolder - Open folder selection dialog
-  ipcMain.handle('system:selectFolder', async (_event, input: SystemSelectFolderInput) => {
+  ipcMain.handle('system:selectFolder', async (_event, input: SystemSelectFolderInput): Promise<IPCResult<SystemSelectFolderOutput>> => {
     try {
       const result = await dialog.showOpenDialog({
         title: input?.title ?? 'Select Folder',
@@ -53,36 +56,36 @@ export function registerSystemHandlers(): void {
         properties: ['openDirectory', 'createDirectory'],
       })
 
-      const output: SystemSelectFolderOutput = {
+      const data: SystemSelectFolderOutput = {
         path: result.canceled ? null : result.filePaths[0] ?? null,
       }
 
-      return output
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // system:checkClaude - Check if Claude CLI is available
-  ipcMain.handle('system:checkClaude', async () => {
+  ipcMain.handle('system:checkClaude', async (): Promise<IPCResult<SystemCheckClaudeOutput>> => {
     try {
-      const result = await checkClaudeCLI()
-      return result
+      const data = await checkClaudeCLI()
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // system:getAppInfo - Get application information
-  ipcMain.handle('system:getAppInfo', async () => {
+  ipcMain.handle('system:getAppInfo', async (): Promise<IPCResult<SystemAppInfoOutput>> => {
     try {
-      const output: SystemAppInfoOutput = {
+      const data: SystemAppInfoOutput = {
         version: app.getVersion(),
         dataPath: getAppDataPath(),
       }
-      return output
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 }

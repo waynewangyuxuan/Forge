@@ -27,7 +27,7 @@ import type {
   IPCResult,
   ProjectDeleteOutput,
 } from '@shared/types/ipc.types'
-import type { CreateProjectInput } from '@shared/types/project.types'
+import type { CreateProjectInput, Project } from '@shared/types/project.types'
 
 // Initialize dependencies
 const projectRepo = new SQLiteProjectRepository()
@@ -41,28 +41,30 @@ const github = getGitHubAdapter()
  */
 export function registerProjectHandlers(): void {
   // project:list - Get all projects (with hasLocalFiles status)
-  ipcMain.handle('project:list', async (_event, input: ProjectListInput) => {
+  ipcMain.handle('project:list', async (_event, input: ProjectListInput): Promise<IPCResult<Project[]>> => {
     try {
-      return await listProjects(
+      const data = await listProjects(
         { includeArchived: input?.includeArchived },
         { projectRepo, fs }
       )
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // project:get - Get a single project by ID
-  ipcMain.handle('project:get', async (_event, input: ProjectGetInput) => {
+  ipcMain.handle('project:get', async (_event, input: ProjectGetInput): Promise<IPCResult<Project | null>> => {
     try {
-      return await getProject({ id: input.id }, { projectRepo })
+      const data = await getProject({ id: input.id }, { projectRepo })
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // project:create - Create a new project (GitHub-first workflow)
-  ipcMain.handle('project:create', async (_event, input: CreateProjectInput) => {
+  ipcMain.handle('project:create', async (_event, input: CreateProjectInput): Promise<IPCResult<Project>> => {
     try {
       const result = await createProject(
         {
@@ -79,18 +81,19 @@ export function registerProjectHandlers(): void {
         }
       )
       // Return just the project (version is created automatically)
-      return result.project
+      return { ok: true, data: result.project }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
   // project:archive - Archive a project
-  ipcMain.handle('project:archive', async (_event, input: ProjectArchiveInput) => {
+  ipcMain.handle('project:archive', async (_event, input: ProjectArchiveInput): Promise<IPCResult<void>> => {
     try {
       await archiveProject({ id: input.id }, { projectRepo })
+      return { ok: true, data: undefined }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 
@@ -113,14 +116,15 @@ export function registerProjectHandlers(): void {
   })
 
   // project:activate - Clone project from GitHub when local files don't exist
-  ipcMain.handle('project:activate', async (_event, input: ProjectActivateInput) => {
+  ipcMain.handle('project:activate', async (_event, input: ProjectActivateInput): Promise<IPCResult<Project>> => {
     try {
-      return await activateProject(
+      const data = await activateProject(
         { id: input.id },
         { projectRepo, fs, github }
       )
+      return { ok: true, data }
     } catch (error) {
-      throw serializeError(error)
+      return { ok: false, error: serializeError(error) }
     }
   })
 }
