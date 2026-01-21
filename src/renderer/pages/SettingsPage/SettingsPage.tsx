@@ -9,7 +9,7 @@ import { Button } from '../../components/primitives/Button'
 import { Input } from '../../components/primitives/Input'
 import { useGitHubAuth } from '../../hooks/useGitHubAuth'
 import { useUIStore } from '../../stores/ui.store'
-import type { Settings } from '@shared/types/runtime.types'
+import type { Settings, PushStrategy } from '@shared/types/runtime.types'
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate()
@@ -18,6 +18,9 @@ export const SettingsPage: React.FC = () => {
 
   const [settings, setSettings] = useState<Settings | null>(null)
   const [cloneRoot, setCloneRoot] = useState('')
+  const [commitOnScaffold, setCommitOnScaffold] = useState(true)
+  const [autoCommit, setAutoCommit] = useState(true)
+  const [pushStrategy, setPushStrategy] = useState<PushStrategy>('auto')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [avatarError, setAvatarError] = useState(false)
@@ -38,6 +41,9 @@ export const SettingsPage: React.FC = () => {
         const s = await window.api.invoke('system:getSettings') as Settings
         setSettings(s)
         setCloneRoot(s.cloneRoot)
+        setCommitOnScaffold(s.commitOnScaffold ?? true)
+        setAutoCommit(s.autoCommitOnMilestone)
+        setPushStrategy(s.pushStrategy ?? 'auto')
       } catch (error) {
         console.error('Failed to load settings:', error)
         showToast({ type: 'error', message: 'Failed to load settings' })
@@ -80,6 +86,52 @@ export const SettingsPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to select folder:', error)
+    }
+  }
+
+  const handleCommitOnScaffoldChange = async (value: boolean) => {
+    setCommitOnScaffold(value)
+    try {
+      const updated = await window.api.invoke('system:updateSettings', {
+        commitOnScaffold: value,
+      }) as Settings
+      setSettings(updated)
+    } catch (error) {
+      console.error('Failed to save settings:', error)
+      showToast({ type: 'error', message: 'Failed to save settings' })
+      setCommitOnScaffold(!value) // Revert on error
+    }
+  }
+
+  const handleAutoCommitChange = async (value: boolean) => {
+    setAutoCommit(value)
+    try {
+      const updated = await window.api.invoke('system:updateSettings', {
+        autoCommitOnMilestone: value,
+      }) as Settings
+      setSettings(updated)
+    } catch (error) {
+      console.error('Failed to save settings:', error)
+      showToast({ type: 'error', message: 'Failed to save settings' })
+      setAutoCommit(!value) // Revert on error
+    }
+  }
+
+  const handlePushStrategyChange = async (value: PushStrategy) => {
+    const oldValue = pushStrategy
+    setPushStrategy(value)
+    // Also update autoPush for backwards compatibility
+    const newAutoPush = value === 'auto'
+    try {
+      const updated = await window.api.invoke('system:updateSettings', {
+        pushStrategy: value,
+        autoPush: newAutoPush,
+      }) as Settings
+      setSettings(updated)
+    } catch (error) {
+      console.error('Failed to save settings:', error)
+      showToast({ type: 'error', message: 'Failed to save settings' })
+      setPushStrategy(oldValue) // Revert on error
     }
   }
 
@@ -234,6 +286,80 @@ export const SettingsPage: React.FC = () => {
                   </Button>
                 </div>
               )}
+            </div>
+          </section>
+
+          {/* Git Integration */}
+          <section className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-stone-100">
+              <h2 className="text-lg font-medium text-stone-900">Git Integration</h2>
+              <p className="text-sm text-stone-500 mt-1">
+                Configure automatic git commits and push behavior
+              </p>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              {/* Commit on scaffold toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-stone-900">Commit on scaffold generation</div>
+                  <div className="text-sm text-stone-500">
+                    Automatically commit changes after scaffold generation completes
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleCommitOnScaffoldChange(!commitOnScaffold)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    commitOnScaffold ? 'bg-amber-500' : 'bg-stone-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      commitOnScaffold ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Auto-commit on milestone toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-stone-900">Commit on milestone completion</div>
+                  <div className="text-sm text-stone-500">
+                    Automatically commit changes when a milestone is completed
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleAutoCommitChange(!autoCommit)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    autoCommit ? 'bg-amber-500' : 'bg-stone-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      autoCommit ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Push strategy selector */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-stone-900">Push strategy</div>
+                  <div className="text-sm text-stone-500">
+                    How to handle pushing commits to remote
+                  </div>
+                </div>
+                <select
+                  value={pushStrategy}
+                  onChange={(e) => handlePushStrategyChange(e.target.value as PushStrategy)}
+                  className="px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                >
+                  <option value="auto">Auto (push after commit)</option>
+                  <option value="manual">Manual (you push later)</option>
+                  <option value="disabled">Disabled (never push)</option>
+                </select>
+              </div>
             </div>
           </section>
 

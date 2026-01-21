@@ -8,6 +8,8 @@ import { SQLiteProjectRepository } from '../repositories/sqlite-project.repo'
 import { SQLiteVersionRepository } from '../repositories/sqlite-version.repo'
 import { getFileSystemAdapter } from '../adapters/file-system.adapter'
 import { getClaudeAdapter } from '../adapters/claude.adapter'
+import { getGitAdapter } from '../adapters/git.adapter'
+import { SQLiteSettingsRepository } from '../repositories/sqlite-settings.repo'
 import { serializeError } from '@shared/errors'
 import { generateScaffold } from '../../application/use-cases/scaffold'
 import type {
@@ -21,8 +23,10 @@ import type { GenerateScaffoldInput, GenerateScaffoldResult } from '@shared/type
 // Initialize dependencies
 const projectRepo = new SQLiteProjectRepository()
 const versionRepo = new SQLiteVersionRepository()
+const settingsRepo = new SQLiteSettingsRepository()
 const fs = getFileSystemAdapter()
 const claude = getClaudeAdapter()
+const git = getGitAdapter()
 
 /**
  * Send an event to all browser windows
@@ -43,11 +47,22 @@ export function registerScaffoldHandlers(): void {
     'scaffold:generate',
     async (_event, input: GenerateScaffoldInput): Promise<IPCResult<GenerateScaffoldResult>> => {
       try {
+        // Load settings for git operations
+        const settings = await settingsRepo.getAll()
+
+        // Backward compat: if pushStrategy missing, derive from autoPush
+        const pushStrategy = settings.pushStrategy ?? (settings.autoPush ? 'auto' : 'disabled')
+
         const result = await generateScaffold(input, {
           projectRepo,
           versionRepo,
           fs,
           claude,
+          git,
+          settings: {
+            commitOnScaffold: settings.commitOnScaffold ?? true,
+            pushStrategy: pushStrategy as 'auto' | 'manual' | 'disabled',
+          },
           emitProgress: (event: ScaffoldProgressEvent) => {
             sendToAllWindows('scaffold:progress', event)
           },

@@ -14,6 +14,8 @@ import {
   setConfigDir,
   configExists,
   getAvailableStateMachines,
+  getResolvedHookConfig,
+  loadGitHooksConfig,
 } from '../../src/main/infrastructure/config-loader/yaml-config-loader'
 
 // Point to the actual config directory in the project
@@ -152,6 +154,64 @@ describe('YamlConfigLoader', () => {
       expect(config1).not.toBe(config2)
       // But same content
       expect(config1.name).toBe(config2.name)
+    })
+  })
+
+  describe('loadGitHooksConfig', () => {
+    it('should load git hooks configuration', () => {
+      const config = loadGitHooksConfig()
+
+      expect(config.version).toBe(1)
+      expect(config.hooks).toBeDefined()
+      expect(config.defaults).toBeDefined()
+      expect(config.hooks['scaffold_complete']).toBeDefined()
+    })
+
+    it('should have valid defaults', () => {
+      const config = loadGitHooksConfig()
+
+      expect(['auto', 'manual', 'disabled']).toContain(config.defaults.pushStrategy)
+      expect(typeof config.defaults.stageAll).toBe('boolean')
+    })
+  })
+
+  describe('getResolvedHookConfig', () => {
+    it('should return null for non-existent hook', () => {
+      const resolved = getResolvedHookConfig('nonexistent_hook')
+      expect(resolved).toBeNull()
+    })
+
+    it('should return resolved config for existing hook', () => {
+      const resolved = getResolvedHookConfig('scaffold_complete')
+      expect(resolved).not.toBeNull()
+      expect(resolved!.enabled).toBe(true)
+      expect(resolved!.commit.message).toContain('scaffold')
+      expect(resolved!.push.strategy).toBe('auto')
+    })
+
+    it('should preserve explicit hook files when stageAll default exists', () => {
+      // The scaffold_complete hook explicitly sets files to ['META/']
+      // Even if stageAll were true, we should preserve the explicit files
+      const resolved = getResolvedHookConfig('scaffold_complete')
+      expect(resolved!.commit.files).toEqual(['META/'])
+    })
+
+    it('should apply push strategy default when hook omits it', () => {
+      const resolved = getResolvedHookConfig('scaffold_complete')
+
+      // Should either have hook's explicit strategy or fall back to default
+      expect(['auto', 'manual', 'disabled']).toContain(resolved!.push.strategy)
+    })
+
+    it('should merge defaults while preserving hook values', () => {
+      const rawConfig = loadGitHooksConfig()
+      const resolved = getResolvedHookConfig('scaffold_complete')
+
+      // Hook's enabled flag should be preserved
+      expect(resolved!.enabled).toBe(rawConfig.hooks['scaffold_complete'].enabled)
+
+      // Commit message should be preserved
+      expect(resolved!.commit.message).toBe(rawConfig.hooks['scaffold_complete'].commit.message)
     })
   })
 })

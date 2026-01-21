@@ -218,6 +218,45 @@ export class GitHubRepoNotFoundError extends ForgeError {
 }
 
 /**
+ * Git repository not found - path is not a git repo
+ */
+export class GitNotRepoError extends ForgeError {
+  public readonly path: string
+
+  constructor(path: string) {
+    super(`Not a git repository: ${path}`, ErrorCodes.GIT_NOT_REPO)
+    this.name = 'GitNotRepoError'
+    this.path = path
+  }
+}
+
+/**
+ * Git no remote - repository has no remote configured
+ */
+export class GitNoRemoteError extends ForgeError {
+  public readonly path: string
+
+  constructor(path: string) {
+    super(`No remote configured for repository: ${path}`, ErrorCodes.GIT_NO_REMOTE)
+    this.name = 'GitNoRemoteError'
+    this.path = path
+  }
+}
+
+/**
+ * Git operation failed - generic git command error
+ */
+export class GitOperationError extends ForgeError {
+  public readonly operation: string
+
+  constructor(operation: string, message: string) {
+    super(`Git ${operation} failed: ${message}`, ErrorCodes.GIT_OPERATION_FAILED)
+    this.name = 'GitOperationError'
+    this.operation = operation
+  }
+}
+
+/**
  * Serialized error shape for IPC transport
  */
 export interface SerializedError {

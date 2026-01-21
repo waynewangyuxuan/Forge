@@ -47,6 +47,10 @@ export const ErrorCodes = {
   GITHUB_OPERATION_FAILED: 'GITHUB_OPERATION_FAILED',
   GITHUB_MISSING_SCOPE: 'GITHUB_MISSING_SCOPE',
   GITHUB_REPO_NOT_FOUND: 'GITHUB_REPO_NOT_FOUND',
+  // Git errors
+  GIT_NOT_REPO: 'GIT_NOT_REPO',
+  GIT_NO_REMOTE: 'GIT_NO_REMOTE',
+  GIT_OPERATION_FAILED: 'GIT_OPERATION_FAILED',
 } as const
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes]
@@ -69,8 +73,10 @@ export const DEFAULT_SETTINGS = {
   projectsLocation: '~/Projects',
   cloneRoot: '~/Projects', // GitHub clone root directory
   initGit: true,
-  autoCommitOnMilestone: true,
-  autoPush: false,
+  commitOnScaffold: true, // Commit when scaffold generation completes
+  autoCommitOnMilestone: true, // Commit when milestone completes
+  pushStrategy: 'auto' as const, // auto | manual | disabled
+  autoPush: false, // Legacy - use pushStrategy instead
   defaultEditor: 'code',
 } as const
 

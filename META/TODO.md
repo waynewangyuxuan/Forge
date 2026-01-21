@@ -151,6 +151,51 @@ All tasks completed. See PROGRESS.md for details.
 
 ---
 
+## M4.1: Git Operations Module (COMPLETE)
+
+### Section 1: Shared Layer - Types & Errors
+- [x] 1.1 Add Git error codes to constants.ts
+- [x] 1.2 Add Git error classes to errors.ts
+- [x] 1.3 Extend IGitAdapter interface with status(), add(), hasRemote()
+- [x] 1.4 Add GitStatus and GitHookResult types
+
+### Section 2: Config Layer
+- [x] 2.1 Create config/git-operations.yaml
+- [x] 2.2 Add GitHooksConfig types to yaml-config-loader.ts
+- [x] 2.3 Add loadGitHooksConfig() function
+
+### Section 3: Infrastructure - GitAdapter
+- [x] 3.1 Install simple-git package
+- [x] 3.2 Implement GitAdapter with all IGitAdapter methods
+- [x] 3.3 Add singleton getter getGitAdapter()
+- [x] 3.4 Export from adapters/index.ts
+
+### Section 4: Domain Engine
+- [x] 4.1 Create GitHookContext interface
+- [x] 4.2 Implement executeGitHook() function
+- [x] 4.3 Use renderPrompt() for commit message templates
+- [x] 4.4 Handle settings overrides for push behavior
+
+### Section 5: Integration - Scaffold Generation
+- [x] 5.1 Add git?: IGitAdapter to GenerateScaffoldDeps
+- [x] 5.2 Add Phase 5.5 after file writes, before state transition
+- [x] 5.3 Emit progress events for git operations
+- [x] 5.4 Handle git errors gracefully (warn, don't fail)
+- [x] 5.5 Update IPC handler to inject git adapter + settings
+
+### Section 6: Settings UI
+- [x] 6.1 Add Git Integration section to SettingsPage
+- [x] 6.2 Add toggle for autoCommitOnMilestone
+- [x] 6.3 Add toggle for autoPush
+
+### Section 7: Tests & Documentation
+- [x] 7.1 Write GitAdapter unit tests
+- [x] 7.2 Write git-operations engine tests
+- [x] 7.3 Update M4.1.md with completion status
+- [x] 7.4 Update TODO.md and PROGRESS.md
+
+---
+
 ### Potential Tasks (discovered during M1/M2)
 - [x] P1. TypeScript path aliases setup (`@shared`) - Done
 - [x] P2. Vitest configuration for main process tests - Done

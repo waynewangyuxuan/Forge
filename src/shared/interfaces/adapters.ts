@@ -115,16 +115,56 @@ export interface ICredentialStore {
 }
 
 /**
+ * Git repository status
+ */
+export interface GitStatus {
+  staged: string[]
+  unstaged: string[]
+  untracked: string[]
+  deleted: string[]
+  branch: string
+  ahead: number
+  behind: number
+}
+
+/**
+ * Result of a git hook execution
+ */
+export interface GitHookResult {
+  success: boolean
+  commitHash?: string
+  pushed?: boolean
+  pushFailed?: boolean
+  pushError?: string
+  error?: string
+  skipped?: boolean
+  skippedReason?: string
+}
+
+/**
  * Git adapter interface
  */
 export interface IGitAdapter {
+  // Repository operations
   init(path: string): Promise<void>
-  commit(path: string, message: string): Promise<void>
+  isRepo(path: string): Promise<boolean>
+
+  // Status and staging
+  status(path: string): Promise<GitStatus>
+  add(path: string, files: string[]): Promise<void>
+
+  // Commit and push
+  commit(path: string, message: string): Promise<string> // returns commit hash
+  push(path: string, remote?: string): Promise<void>
+
+  // Branch operations
   createBranch(path: string, branch: string): Promise<void>
   checkout(path: string, branch: string): Promise<void>
   getCurrentBranch(path: string): Promise<string>
-  push(path: string, remote?: string): Promise<void>
-  isRepo(path: string): Promise<boolean>
+
+  // Remote operations
+  hasRemote(path: string): Promise<boolean>
+  getRemoteUrl(path: string): Promise<string | null>
 }
 
 /**
