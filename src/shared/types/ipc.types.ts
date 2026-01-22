@@ -24,6 +24,7 @@ import {
   GenerateScaffoldInput,
   GenerateScaffoldResult,
 } from './scaffold.types'
+import { ExecutionPlan, Feedback } from './execution.types'
 import { ErrorCode, WarningCode } from '../constants'
 
 // ============================================================
@@ -178,6 +179,10 @@ export interface ReviewRegenerateInput {
 }
 
 export interface ReviewApproveInput {
+  versionId: string
+}
+
+export interface ReviewGetFeedbackInput {
   versionId: string
 }
 
@@ -450,6 +455,16 @@ export interface IPCChannelMap {
   // Scaffold - all return IPCResult<T>
   'scaffold:generate': { input: GenerateScaffoldInput; output: IPCResult<GenerateScaffoldResult> }
   'scaffold:checkClaudeAvailable': { input: void; output: IPCResult<{ available: boolean; version: string | null }> }
+
+  // Review - all return IPCResult<T>
+  'review:getTodo': { input: ReviewGetTodoInput; output: IPCResult<ExecutionPlan> }
+  'review:readTodoRaw': { input: ReviewReadTodoRawInput; output: IPCResult<string> }
+  'review:saveTodoRaw': { input: ReviewSaveTodoRawInput; output: IPCResult<void> }
+  'review:getFeedback': { input: ReviewGetFeedbackInput; output: IPCResult<Feedback | null> }
+  'review:addFeedback': { input: ReviewAddFeedbackInput; output: IPCResult<Feedback> }
+  'review:clearFeedback': { input: ReviewClearFeedbackInput; output: IPCResult<void> }
+  'review:regenerate': { input: ReviewRegenerateInput; output: IPCResult<void> }
+  'review:approve': { input: ReviewApproveInput; output: IPCResult<void> }
 }
 
 /**

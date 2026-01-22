@@ -42,23 +42,48 @@ export interface TaskAttempt {
 }
 
 /**
- * Parsed task from TODO.md
+ * Parsed task from TODO.md + MILESTONES/*.md
  */
 export interface Task {
   id: string // e.g., "001"
-  description: string
-  completed: boolean
-  milestone?: string
+  title: string // Short title from TODO.md line
+  description?: string // Detailed description from MILESTONES/*.md
+  status: TaskStatus // Derived from checkbox state
+  milestoneId: string // e.g., "M1"
+  depends: string[] // Task IDs this depends on
+  verification?: string // How to verify completion
 }
 
 /**
- * Parsed execution plan from TODO.md
+ * Milestone containing tasks
+ */
+export interface Milestone {
+  id: string // e.g., "M1"
+  name: string // e.g., "Project Setup"
+  description?: string
+  tasks: Task[]
+  completedCount: number
+  totalCount: number
+}
+
+/**
+ * Parsed execution plan from TODO.md + MILESTONES/*.md
  */
 export interface ExecutionPlan {
-  tasks: Task[]
-  milestones: string[]
+  milestones: Milestone[]
   totalTasks: number
   completedTasks: number
+}
+
+/**
+ * Feedback for review
+ */
+export interface Feedback {
+  id: string
+  versionId: string
+  content: string
+  createdAt: string // ISO 8601
+  updatedAt: string // ISO 8601
 }
 
 /**
