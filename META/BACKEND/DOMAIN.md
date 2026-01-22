@@ -184,26 +184,64 @@ getAvailableEvents('reviewing') → ['REGENERATE', 'APPROVE', 'EDIT_SPEC']
 
 ### 3.5 TodoParser Engine (M5+)
 
-**职责**：TODO.md 内容 → 结构化执行计划
+**职责**：解析 TODO.md + MILESTONES/*.md → 结构化执行计划
 
 **输入**：
-- TODO.md 的文本内容
+- TODO.md 内容（轻量索引）
+- MILESTONES/*.md 内容数组（详细任务信息）
 
-**输出**：
-- ExecutionPlan 数据结构
+**两层文件结构**：
 
-**解析规则**：
+Forge 的 scaffold 采用两层结构：
+- `META/TODO.md`：轻量索引，只包含任务 ID、标题和完成状态
+- `META/MILESTONES/M{N}-*.md`：每个 milestone 的详细任务描述
+
+**TODO.md 格式**：
 
 ```markdown
-## Milestone 1: Setup              → Milestone { name: "Setup" }
+# TODO
 
-- [ ] 001. Initialize project      → Task { id: "001", status: "pending" }
-  - Verify: package.json exists    → Task.verification
-  - Depends: none                  → Task.depends: []
+> Project: my-project
+> Generated: 2024-01-01T00:00:00.000Z
 
-- [x] 002. Add TypeScript          → Task { id: "002", status: "completed" }
-  - Depends: 001                   → Task.depends: ["001"]
+## M1: Setup                        → milestone.id = "M1", milestone.name = "Setup"
+- [ ] 001. Initialize project       → task.id = "001", task.status = "pending"
+- [x] 002. Add dependencies         → task.id = "002", task.status = "completed"
+
+## M2: Features
+- [ ] 003. Implement feature
 ```
+
+**MILESTONES/M1-setup.md 格式**：
+
+```markdown
+# M1: Setup
+
+> Milestone description             → milestone.description
+
+## Tasks
+
+### 001. Task Title                 → 匹配 task.id
+
+**Description:**                    → task.description
+Detailed description text
+
+**Verification:**                   → task.verification
+How to verify completion
+
+**Depends:** 001, 002               → task.depends = ["001", "002"]
+
+---
+```
+
+**核心方法**：
+
+| 方法 | 作用 |
+|------|------|
+| `parseTodoIndex(content)` | 解析 TODO.md，返回任务 ID 列表和完成状态 |
+| `parseMilestoneDetail(content)` | 解析 MILESTONES/*.md，返回任务详情 |
+| `buildExecutionPlan(index, details)` | 组合成完整 ExecutionPlan |
+| `parseExecutionPlan(todo, milestones)` | 便捷方法，组合以上步骤 |
 
 **输出结构**：
 
@@ -211,21 +249,25 @@ getAvailableEvents('reviewing') → ['REGENERATE', 'APPROVE', 'EDIT_SPEC']
 ExecutionPlan {
   milestones: [
     Milestone {
+      id: "M1"
       name: "Setup"
+      description: "Milestone description"
       tasks: [
-        Task { id: "001", status: "pending", depends: [] },
-        Task { id: "002", status: "completed", depends: ["001"] }
+        Task { id: "001", title: "Initialize project", status: "pending", depends: [] },
+        Task { id: "002", title: "Add dependencies", status: "completed", depends: ["001"] }
       ]
     }
   ]
+  totalTasks: 2
+  completedTasks: 1
 }
 ```
 
 **实现要点**：
-- 按行解析，识别 Milestone 和 Task
+- TODO.md 按行解析：`## M{N}: Name` 识别 milestone，`- [ ] {id}. Title` 识别 task
+- MILESTONES/*.md 解析：`### {id}. Title` 识别 task section，提取 Description/Verification/Depends
 - `- [ ]` = pending，`- [x]` = completed
-- 提取 Verify 和 Depends 元数据
-- 容错：格式不完全匹配也要尽量解析
+- 容错：缺少详情的 task 仍然可以显示（只是没有 description/verification）
 
 ### 3.4 PlanCalculator Engine
 
