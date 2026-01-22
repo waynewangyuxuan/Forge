@@ -434,6 +434,16 @@ describe('clearFeedback', () => {
 describe('approveReview', () => {
   let deps: ReturnType<typeof createMockDeps>
 
+  // Valid TODO.md content with tasks
+  const validTodoContent = `# TODO
+
+> Project: test-project
+
+## M1: Setup
+- [ ] 001. Initialize project
+- [x] 002. Add config
+`
+
   beforeEach(() => {
     // Set config directory for state machine loading
     setConfigDir(CONFIG_DIR)
@@ -441,7 +451,11 @@ describe('approveReview', () => {
 
     deps = createMockDeps()
     vi.mocked(deps.versionRepo.findById).mockResolvedValue(mockVersion)
+    vi.mocked(deps.projectRepo.findById).mockResolvedValue(mockProject)
     vi.mocked(deps.versionRepo.updateStatus).mockResolvedValue(undefined)
+    // Default: TODO.md exists with valid tasks
+    vi.mocked(deps.fs.exists).mockResolvedValue(true)
+    vi.mocked(deps.fs.readFile).mockResolvedValue(validTodoContent)
   })
 
   afterEach(() => {
@@ -465,6 +479,57 @@ describe('approveReview', () => {
         approveReview({ versionId: 'nonexistent' }, deps as ApproveReviewDeps)
       ).rejects.toThrow(NotFoundError)
     })
+
+    it('should throw NotFoundError when project does not exist', async () => {
+      vi.mocked(deps.projectRepo.findById).mockResolvedValue(null)
+
+      await expect(
+        approveReview({ versionId: 'ver-456' }, deps as ApproveReviewDeps)
+      ).rejects.toThrow(NotFoundError)
+    })
+  })
+
+  describe('task validation', () => {
+    it('should throw ValidationError when TODO.md does not exist', async () => {
+      vi.mocked(deps.fs.exists).mockResolvedValue(false)
+
+      await expect(
+        approveReview({ versionId: 'ver-456' }, deps as ApproveReviewDeps)
+      ).rejects.toThrow(ValidationError)
+
+      // Verify we stay in reviewing state (no status update called)
+      expect(deps.versionRepo.updateStatus).not.toHaveBeenCalled()
+    })
+
+    it('should throw ValidationError when TODO.md has no tasks', async () => {
+      // Empty TODO.md with no milestones/tasks
+      vi.mocked(deps.fs.readFile).mockResolvedValue(`# TODO
+
+> Project: test-project
+`)
+
+      await expect(
+        approveReview({ versionId: 'ver-456' }, deps as ApproveReviewDeps)
+      ).rejects.toThrow(ValidationError)
+
+      expect(deps.versionRepo.updateStatus).not.toHaveBeenCalled()
+    })
+
+    it('should throw ValidationError when TODO.md has milestones but no tasks', async () => {
+      vi.mocked(deps.fs.readFile).mockResolvedValue(`# TODO
+
+> Project: test-project
+
+## M1: Setup
+## M2: Features
+`)
+
+      await expect(
+        approveReview({ versionId: 'ver-456' }, deps as ApproveReviewDeps)
+      ).rejects.toThrow(ValidationError)
+
+      expect(deps.versionRepo.updateStatus).not.toHaveBeenCalled()
+    })
   })
 
   describe('state transition', () => {
@@ -477,7 +542,7 @@ describe('approveReview', () => {
       ).rejects.toThrow(ValidationError)
     })
 
-    it('should transition to ready state when in reviewing state', async () => {
+    it('should transition to ready state when in reviewing state with valid tasks', async () => {
       await approveReview({ versionId: 'ver-456' }, deps as ApproveReviewDeps)
 
       expect(deps.versionRepo.updateStatus).toHaveBeenCalledWith('ver-456', {

@@ -91,16 +91,29 @@ export async function generateScaffold(
     // GENERATE_SCAFFOLD: drafting → scaffolding
     // REGENERATE: reviewing → scaffolding
     const currentState = version.devStatus
+    const isRegenerating = currentState === 'reviewing'
     let scaffoldingEvent: string
     if (currentState === 'drafting') {
       scaffoldingEvent = 'GENERATE_SCAFFOLD'
-    } else if (currentState === 'reviewing') {
+    } else if (isRegenerating) {
       scaffoldingEvent = 'REGENERATE'
     } else {
       throw new ValidationError(
         `Cannot generate scaffold from state '${currentState}'. Must be in 'drafting' or 'reviewing' state.`,
         'devStatus'
       )
+    }
+
+    // IMPORTANT: Validate feedback BEFORE state transition for regeneration
+    // This ensures we stay in 'reviewing' state if validation fails
+    if (isRegenerating) {
+      if (!deps.feedbackRepo) {
+        throw new ValidationError('Feedback repository is required for regeneration', 'feedbackRepo')
+      }
+      const feedback = await deps.feedbackRepo.findByVersionId(input.versionId)
+      if (!feedback || !feedback.content.trim()) {
+        throw new ValidationError('Feedback is required for regeneration', 'feedback')
+      }
     }
 
     // Transition to scaffolding state using state machine
@@ -127,23 +140,13 @@ export async function generateScaffold(
     emitProgress({ versionId: input.versionId, message: 'Preparing prompt...' })
 
     let prompt: string
-    const isRegenerating = currentState === 'reviewing'
 
     if (isRegenerating) {
       // Regeneration: use regenerate prompt with feedback and current TODO
+      // Note: feedback was already validated before state transition
       const currentTodo = await readFileOrEmpty(fs, path.join(project.path, 'META', 'TODO.md'))
-      let feedbackContent = ''
-
-      if (deps.feedbackRepo) {
-        const feedback = await deps.feedbackRepo.findByVersionId(input.versionId)
-        if (feedback) {
-          feedbackContent = feedback.content
-        }
-      }
-
-      if (!feedbackContent.trim()) {
-        throw new ValidationError('Feedback is required for regeneration', 'feedback')
-      }
+      const feedback = await deps.feedbackRepo!.findByVersionId(input.versionId)
+      const feedbackContent = feedback!.content
 
       const regeneratePromptConfig = loadRegenerateScaffoldPrompt()
       prompt = renderPrompt(regeneratePromptConfig.template, {

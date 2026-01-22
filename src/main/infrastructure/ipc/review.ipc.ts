@@ -192,7 +192,7 @@ export function registerReviewHandlers(): void {
     'review:approve',
     async (_event, input: ReviewApproveInput): Promise<IPCResult<void>> => {
       try {
-        await approveReview(input, { versionRepo })
+        await approveReview(input, { projectRepo, versionRepo, fs })
         return { ok: true, data: undefined }
       } catch (error) {
         return { ok: false, error: serializeError(error) }
