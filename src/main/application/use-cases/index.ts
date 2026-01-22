@@ -14,3 +14,6 @@ export * from './spec'
 
 // Scaffold use cases
 export * from './scaffold'
+
+// Review use cases
+export * from './review'
