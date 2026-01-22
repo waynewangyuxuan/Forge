@@ -6,6 +6,7 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import { SQLiteProjectRepository } from '../repositories/sqlite-project.repo'
 import { SQLiteVersionRepository } from '../repositories/sqlite-version.repo'
+import { SQLiteFeedbackRepository } from '../repositories/sqlite-feedback.repo'
 import { getFileSystemAdapter } from '../adapters/file-system.adapter'
 import { getClaudeAdapter } from '../adapters/claude.adapter'
 import { getGitAdapter } from '../adapters/git.adapter'
@@ -23,6 +24,7 @@ import type { GenerateScaffoldInput, GenerateScaffoldResult } from '@shared/type
 // Initialize dependencies
 const projectRepo = new SQLiteProjectRepository()
 const versionRepo = new SQLiteVersionRepository()
+const feedbackRepo = new SQLiteFeedbackRepository()
 const settingsRepo = new SQLiteSettingsRepository()
 const fs = getFileSystemAdapter()
 const claude = getClaudeAdapter()
@@ -56,6 +58,7 @@ export function registerScaffoldHandlers(): void {
         const result = await generateScaffold(input, {
           projectRepo,
           versionRepo,
+          feedbackRepo,
           fs,
           claude,
           git,
