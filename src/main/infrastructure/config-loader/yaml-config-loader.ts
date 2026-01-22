@@ -224,6 +224,13 @@ export function loadScaffoldGeneratorPrompt(): PromptConfig {
 }
 
 /**
+ * Load regenerate scaffold prompt config
+ */
+export function loadRegenerateScaffoldPrompt(): PromptConfig {
+  return loadPromptConfig('regenerate-scaffold')
+}
+
+/**
  * Load a template file (raw text, not YAML)
  */
 export function loadTemplate(relativePath: string): string {

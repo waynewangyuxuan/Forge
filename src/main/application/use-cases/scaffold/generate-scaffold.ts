@@ -10,7 +10,7 @@
  */
 
 import * as path from 'path'
-import type { IProjectRepository, IVersionRepository } from '@shared/interfaces/repositories'
+import type { IProjectRepository, IVersionRepository, IFeedbackRepository } from '@shared/interfaces/repositories'
 import type { IFileSystemAdapter, IClaudeAdapter, IGitAdapter } from '@shared/interfaces/adapters'
 import type { Settings } from '@shared/types/runtime.types'
 import { ValidationError, NotFoundError, ClaudeUnavailableError, serializeError } from '@shared/errors'
@@ -28,7 +28,7 @@ import { renderPrompt } from '../../../domain/engines/prompt-renderer'
 import { validateScaffold, parseScaffoldJson } from '../../../domain/engines/scaffold-validator'
 import { generateScaffoldFiles, generateClaudeMd } from '../../../domain/engines/scaffold-writer'
 import { createStateMachine } from '../../../domain/engines/state-machine'
-import { loadScaffoldGeneratorPrompt, loadClaudeMdTemplate, loadDevFlowStateMachine, getResolvedHookConfig } from '../../../infrastructure/config-loader'
+import { loadScaffoldGeneratorPrompt, loadRegenerateScaffoldPrompt, loadClaudeMdTemplate, loadDevFlowStateMachine, getResolvedHookConfig } from '../../../infrastructure/config-loader'
 import { executeGitHook, validateHookDefinition } from '../../../domain/engines/git-operations'
 
 /**
@@ -37,6 +37,7 @@ import { executeGitHook, validateHookDefinition } from '../../../domain/engines/
 export interface GenerateScaffoldDeps {
   projectRepo: IProjectRepository
   versionRepo: IVersionRepository
+  feedbackRepo?: IFeedbackRepository // Optional - needed for regeneration
   fs: IFileSystemAdapter
   claude: IClaudeAdapter
   git?: IGitAdapter // Optional - graceful degradation if not provided
@@ -124,13 +125,45 @@ export async function generateScaffold(
 
     // Phase 2: Render prompt
     emitProgress({ versionId: input.versionId, message: 'Preparing prompt...' })
-    const promptConfig = loadScaffoldGeneratorPrompt()
-    const prompt = renderPrompt(promptConfig.template, {
-      project_name: project.name,
-      product_spec: productSpec,
-      technical_spec: technicalSpec,
-      regulation_spec: regulationSpec || undefined,
-    })
+
+    let prompt: string
+    const isRegenerating = currentState === 'reviewing'
+
+    if (isRegenerating) {
+      // Regeneration: use regenerate prompt with feedback and current TODO
+      const currentTodo = await readFileOrEmpty(fs, path.join(project.path, 'META', 'TODO.md'))
+      let feedbackContent = ''
+
+      if (deps.feedbackRepo) {
+        const feedback = await deps.feedbackRepo.findByVersionId(input.versionId)
+        if (feedback) {
+          feedbackContent = feedback.content
+        }
+      }
+
+      if (!feedbackContent.trim()) {
+        throw new ValidationError('Feedback is required for regeneration', 'feedback')
+      }
+
+      const regeneratePromptConfig = loadRegenerateScaffoldPrompt()
+      prompt = renderPrompt(regeneratePromptConfig.template, {
+        project_name: project.name,
+        product_spec: productSpec,
+        technical_spec: technicalSpec,
+        regulation_spec: regulationSpec || undefined,
+        current_todo: currentTodo,
+        feedback: feedbackContent,
+      })
+    } else {
+      // Initial generation: use scaffold-generator prompt
+      const promptConfig = loadScaffoldGeneratorPrompt()
+      prompt = renderPrompt(promptConfig.template, {
+        project_name: project.name,
+        product_spec: productSpec,
+        technical_spec: technicalSpec,
+        regulation_spec: regulationSpec || undefined,
+      })
+    }
 
     // Phase 3: Call Claude
     emitProgress({ versionId: input.versionId, message: 'Generating scaffold with AI...' })
@@ -224,6 +257,11 @@ export async function generateScaffold(
     // Use scaffoldingState (not hardcoded) to stay aligned with YAML config
     const reviewingState = stateMachine.transition(scaffoldingState!, 'SCAFFOLD_SUCCESS')
     await versionRepo.updateStatus(input.versionId, { devStatus: reviewingState })
+
+    // Clear feedback after successful regeneration
+    if (isRegenerating && deps.feedbackRepo) {
+      await deps.feedbackRepo.delete(input.versionId)
+    }
 
     emitCompleted({ versionId: input.versionId })
 
