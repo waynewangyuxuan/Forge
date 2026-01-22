@@ -9,6 +9,7 @@ import { createTestDatabase, setDatabase, closeDatabase } from '../../src/main/i
 import { SQLiteProjectRepository } from '../../src/main/infrastructure/repositories/sqlite-project.repo'
 import { SQLiteVersionRepository } from '../../src/main/infrastructure/repositories/sqlite-version.repo'
 import { SQLiteSettingsRepository } from '../../src/main/infrastructure/repositories/sqlite-settings.repo'
+import { SQLiteFeedbackRepository } from '../../src/main/infrastructure/repositories/sqlite-feedback.repo'
 import { DuplicateError, NotFoundError } from '../../src/shared/errors'
 import { DEFAULT_SETTINGS } from '../../src/shared/constants'
 
@@ -530,6 +531,131 @@ describe('SQLiteSettingsRepository', () => {
 
       const row = db.prepare('SELECT updated_at FROM settings WHERE key = ?').get('projectsLocation') as { updated_at: string }
       expect(row.updated_at).toBeDefined()
+    })
+  })
+})
+
+describe('SQLiteFeedbackRepository', () => {
+  let db: Database.Database
+  let projectRepo: SQLiteProjectRepository
+  let versionRepo: SQLiteVersionRepository
+  let feedbackRepo: SQLiteFeedbackRepository
+  let versionId: string
+
+  beforeEach(async () => {
+    db = createTestDatabase()
+    setDatabase(db)
+    projectRepo = new SQLiteProjectRepository()
+    versionRepo = new SQLiteVersionRepository()
+    feedbackRepo = new SQLiteFeedbackRepository()
+
+    // Create a project and version for testing feedback
+    const project = await projectRepo.create({
+      name: 'Test Project',
+      path: '/test/project',
+    })
+    const version = await versionRepo.create({
+      projectId: project.id,
+      versionName: 'v1.0',
+      branchName: 'main',
+      devStatus: DevStatusDrafting,
+      runtimeStatus: RuntimeStatusIdle,
+    })
+    versionId = version.id
+  })
+
+  afterEach(() => {
+    closeDatabase()
+  })
+
+  describe('upsert', () => {
+    it('should create feedback when none exists', async () => {
+      const feedback = await feedbackRepo.upsert({
+        versionId,
+        content: 'Please split M2 into smaller tasks',
+      })
+
+      expect(feedback.id).toBeDefined()
+      expect(feedback.versionId).toBe(versionId)
+      expect(feedback.content).toBe('Please split M2 into smaller tasks')
+      expect(feedback.createdAt).toBeDefined()
+      expect(feedback.updatedAt).toBeDefined()
+    })
+
+    it('should update feedback when already exists', async () => {
+      // Create initial feedback
+      const initial = await feedbackRepo.upsert({
+        versionId,
+        content: 'Initial feedback',
+      })
+
+      // Update feedback
+      const updated = await feedbackRepo.upsert({
+        versionId,
+        content: 'Updated feedback',
+      })
+
+      expect(updated.id).toBe(initial.id) // Same ID
+      expect(updated.content).toBe('Updated feedback')
+      expect(updated.createdAt).toBe(initial.createdAt) // Same creation time
+      // updatedAt should be >= createdAt (might be same if operations are fast)
+      expect(new Date(updated.updatedAt).getTime()).toBeGreaterThanOrEqual(
+        new Date(initial.createdAt).getTime()
+      )
+    })
+  })
+
+  describe('findByVersionId', () => {
+    it('should return feedback when found', async () => {
+      await feedbackRepo.upsert({
+        versionId,
+        content: 'Test feedback',
+      })
+
+      const found = await feedbackRepo.findByVersionId(versionId)
+
+      expect(found).not.toBeNull()
+      expect(found?.versionId).toBe(versionId)
+      expect(found?.content).toBe('Test feedback')
+    })
+
+    it('should return null when not found', async () => {
+      const found = await feedbackRepo.findByVersionId('nonexistent-version-id')
+
+      expect(found).toBeNull()
+    })
+  })
+
+  describe('delete', () => {
+    it('should remove feedback', async () => {
+      await feedbackRepo.upsert({
+        versionId,
+        content: 'To be deleted',
+      })
+
+      await feedbackRepo.delete(versionId)
+
+      const found = await feedbackRepo.findByVersionId(versionId)
+      expect(found).toBeNull()
+    })
+
+    it('should not throw when feedback does not exist', async () => {
+      // Should not throw
+      await feedbackRepo.delete('nonexistent-version-id')
+    })
+  })
+
+  describe('cascade delete', () => {
+    it('should delete feedback when version is deleted', async () => {
+      await feedbackRepo.upsert({
+        versionId,
+        content: 'Will be cascade deleted',
+      })
+
+      await versionRepo.delete(versionId)
+
+      const found = await feedbackRepo.findByVersionId(versionId)
+      expect(found).toBeNull()
     })
   })
 })

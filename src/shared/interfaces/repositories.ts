@@ -4,7 +4,7 @@
  */
 
 import { Project, Version } from '../types/project.types'
-import { Execution, TaskAttempt } from '../types/execution.types'
+import { Execution, TaskAttempt, Feedback } from '../types/execution.types'
 import { Run, RuntimeConfig } from '../types/runtime.types'
 
 /**
@@ -121,4 +121,17 @@ export interface ICredentialRepository {
   // Commands
   create(input: { nickname: string; type: string }): Promise<{ id: string; nickname: string; type: string; createdAt: string }>
   delete(id: string): Promise<void>
+}
+
+/**
+ * Feedback repository interface
+ * Stores review feedback for versions (one feedback per version)
+ */
+export interface IFeedbackRepository {
+  // Queries
+  findByVersionId(versionId: string): Promise<Feedback | null>
+
+  // Commands
+  upsert(input: { versionId: string; content: string }): Promise<Feedback>
+  delete(versionId: string): Promise<void>
 }

@@ -6,7 +6,7 @@
 /**
  * Schema version for migrations
  */
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 /**
  * Projects table - stores project metadata
@@ -150,6 +150,40 @@ CREATE TABLE IF NOT EXISTS settings (
 `
 
 /**
+ * Feedback table - stores review feedback for versions
+ * v3: Added feedback table for M5 Review flow
+ */
+export const CREATE_FEEDBACK_TABLE = `
+CREATE TABLE IF NOT EXISTS feedback (
+  id          TEXT PRIMARY KEY,
+  version_id  TEXT NOT NULL REFERENCES versions(id) ON DELETE CASCADE,
+  content     TEXT NOT NULL,
+  created_at  TEXT NOT NULL,
+  updated_at  TEXT NOT NULL,
+  UNIQUE(version_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_version ON feedback(version_id);
+`
+
+/**
+ * Migration SQL from schema version 2 to 3
+ * Adds feedback table for M5 Review flow
+ */
+export const MIGRATION_V2_TO_V3 = `
+CREATE TABLE IF NOT EXISTS feedback (
+  id          TEXT PRIMARY KEY,
+  version_id  TEXT NOT NULL REFERENCES versions(id) ON DELETE CASCADE,
+  content     TEXT NOT NULL,
+  created_at  TEXT NOT NULL,
+  updated_at  TEXT NOT NULL,
+  UNIQUE(version_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_version ON feedback(version_id);
+`
+
+/**
  * Schema version table for migrations
  */
 export const CREATE_SCHEMA_VERSION_TABLE = `
@@ -172,4 +206,5 @@ export const ALL_TABLES = [
   CREATE_RUNS_TABLE,
   CREATE_CREDENTIALS_TABLE,
   CREATE_SETTINGS_TABLE,
+  CREATE_FEEDBACK_TABLE,
 ]
