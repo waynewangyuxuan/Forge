@@ -56,6 +56,7 @@ export const ReviewPage: React.FC = () => {
 
   // Ref to store scaffold subscription cleanup function
   const unsubscribeRef = useRef<(() => void) | null>(null)
+  const pageRef = useRef<HTMLDivElement | null>(null)
 
   // Check for unsaved changes (only in raw mode)
   const hasUnsaved = activeTab === 'raw' && rawContent !== savedRawContent
@@ -352,7 +353,11 @@ export const ReviewPage: React.FC = () => {
   const isReviewing = currentVersion.devStatus === 'reviewing'
 
   return (
-    <div className="flex flex-col h-full p-6">
+    <div
+      ref={pageRef}
+      className="flex flex-col h-full min-h-0 overflow-hidden p-6"
+      data-page="review"
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-light tracking-tight text-[#1a1a1a]">
@@ -393,28 +398,28 @@ export const ReviewPage: React.FC = () => {
         className="mb-4"
       />
 
-      {/* Content area */}
-      <div className="flex-1 min-h-0 overflow-auto">
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <Spinner size="lg" />
-          </div>
-        ) : activeTab === 'tasks' ? (
-          <TaskList plan={executionPlan || { milestones: [], totalTasks: 0, completedTasks: 0 }} />
-        ) : (
-          <MarkdownEditor
-            value={rawContent}
-            onChange={setRawContent}
-            placeholder="TODO.md content..."
-            minHeight={400}
-            className="h-full"
-          />
-        )}
-      </div>
+      <div className="flex-1 min-h-0 flex flex-col gap-6 overflow-hidden">
+        {/* Content area */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <Spinner size="lg" />
+            </div>
+          ) : activeTab === 'tasks' ? (
+            <TaskList plan={executionPlan || { milestones: [], totalTasks: 0, completedTasks: 0 }} />
+          ) : (
+            <MarkdownEditor
+              value={rawContent}
+              onChange={setRawContent}
+              placeholder="TODO.md content..."
+              minHeight={400}
+              className="h-full"
+            />
+          )}
+        </div>
 
-      {/* Feedback Panel - only show when in reviewing state */}
-      {isReviewing && (
-        <div className="mt-6">
+        {/* Feedback Panel - only show when in reviewing state */}
+        {isReviewing && (
           <FeedbackPanel
             feedback={feedback}
             onChange={handleFeedbackChange}
@@ -425,8 +430,8 @@ export const ReviewPage: React.FC = () => {
             regenerating={isRegenerating}
             disabled={!isReviewing}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Regenerate Modal */}
       <Modal

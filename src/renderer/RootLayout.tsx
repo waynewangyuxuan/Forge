@@ -13,7 +13,7 @@ export const RootLayout: React.FC = () => {
   return (
     <div className="flex flex-col h-screen bg-[#faf9f7]">
       <Header />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 min-h-0 overflow-hidden">
         <Outlet />
       </main>
 

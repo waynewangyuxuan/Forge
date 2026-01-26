@@ -3,7 +3,7 @@
  * Layout wrapper for project pages, includes sidebar
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Outlet, useParams } from 'react-router-dom'
 import { useServerStore, useProject, useVersions } from '../../stores/server.store'
 import { Spinner } from '../../components/primitives/Spinner'
@@ -18,6 +18,7 @@ export const ProjectLayout: React.FC = () => {
   const fetchVersions = useServerStore((s) => s.fetchVersions)
   const setCurrentVersion = useServerStore((s) => s.setCurrentVersion)
   const loading = useServerStore((s) => s.loading.projects)
+  const outletContainerRef = useRef<HTMLDivElement | null>(null)
 
   // Fetch projects if not loaded
   useEffect(() => {
@@ -37,6 +38,24 @@ export const ProjectLayout: React.FC = () => {
       setCurrentVersion(projectId, versions[0].id)
     }
   }, [projectId, versions, currentVersionId, setCurrentVersion])
+
+  // Dev-only layout debug logging
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development' || !outletContainerRef.current) return
+    const el = outletContainerRef.current
+    const logMeasurements = () => {
+      const styles = getComputedStyle(el)
+      console.log('[layout:ProjectLayout outlet]', {
+        clientHeight: el.clientHeight,
+        scrollHeight: el.scrollHeight,
+        overflowY: styles.overflowY,
+        overflowX: styles.overflowX,
+      })
+    }
+    logMeasurements()
+    window.addEventListener('resize', logMeasurements)
+    return () => window.removeEventListener('resize', logMeasurements)
+  }, [])
 
   const handleVersionChange = (versionId: string) => {
     if (projectId) {
@@ -74,15 +93,22 @@ export const ProjectLayout: React.FC = () => {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full min-h-0 overflow-hidden" data-layout="project-root">
       <Sidebar
         project={project}
         versions={versions}
         currentVersionId={currentVersionId}
         onVersionChange={handleVersionChange}
       />
-      <div className="flex-1 overflow-auto">
-        <Outlet context={{ projectId, project, currentVersionId }} />
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {/* Content area container ensures routed pages get a bounded, scrollable height */}
+        <div
+          ref={outletContainerRef}
+          className="h-full min-h-0 overflow-y-auto overflow-x-hidden"
+          data-layout="project-outlet"
+        >
+          <Outlet context={{ projectId, project, currentVersionId }} />
+        </div>
       </div>
     </div>
   )

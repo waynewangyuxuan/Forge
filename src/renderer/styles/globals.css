@@ -4,6 +4,14 @@
 
 /* Custom base styles */
 @layer base {
+html,
+body,
+#root {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
   html {
     font-family: 'Inter', system-ui, sans-serif;
   }

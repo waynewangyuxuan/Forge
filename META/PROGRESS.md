@@ -635,6 +635,109 @@ Fixed remaining gaps where new settings (`commitOnScaffold`, `pushStrategy`) wer
 
 ---
 
+## 2026-01-24 - M5: Review Flow - Complete
+
+### Summary
+Implemented the Review flow allowing users to review generated TODO.md, provide feedback, regenerate scaffold, and approve to proceed to execution.
+
+### Architecture Decisions
+| Decision | Choice | Reason |
+|----------|--------|--------|
+| TODO Format | Two-layer (TODO.md + MILESTONES/*.md) | Lightweight index + detailed files |
+| Feedback Storage | SQLite table | Persistent, can be cleared after regeneration |
+| Review UI | Tabs (Tasks / Raw Markdown) | Structured view for reviewing, raw for editing |
+
+### Completed Sections
+
+#### Section 1: Shared Layer - Types & IPC
+- Extended `Task` type with `depends`, `verification`, `description` fields
+- Added `Feedback` type to `execution.types.ts`
+- Added review IPC channels: `review:getTodo`, `review:readTodoRaw`, `review:saveTodoRaw`, `review:addFeedback`, `review:getFeedback`, `review:clearFeedback`, `review:regenerate`, `review:approve`
+
+#### Section 2: Database - Feedback Table
+- Added `feedback` table to schema (SCHEMA_VERSION 3)
+- Created `sqlite-feedback.repo.ts` with CRUD operations
+- Added `IFeedbackRepository` interface
+- Cascade delete when version is deleted
+
+#### Section 3: Domain Engine - TodoParser
+- Created `src/main/domain/engines/todo-parser.ts`
+- `parseTodoIndex()` - Parse TODO.md to extract task IDs and status
+- `parseMilestoneDetail()` - Parse MILESTONES/*.md for task details
+- `buildExecutionPlan()` - Combine index + details into ExecutionPlan
+- Handles edge cases: empty files, missing details, malformed markdown
+
+#### Section 4: Application Layer - Review Use Cases
+- `get-todo.ts` - Read and parse TODO.md + MILESTONES/*.md into ExecutionPlan
+- `read-todo-raw.ts` - Read raw TODO.md content
+- `save-todo-raw.ts` - Save raw TODO.md content
+- `add-feedback.ts` - Add/update feedback
+- `get-feedback.ts` - Get feedback
+- `clear-feedback.ts` - Clear feedback
+- `approve-review.ts` - State transition reviewing → ready (with task validation)
+
+#### Section 5: Application Layer - Regenerate Scaffold
+- Created `config/prompts/regenerate-scaffold.yaml` prompt template
+- Modified `generate-scaffold.ts` to handle regeneration
+- Detects regeneration when `devStatus === 'reviewing'`
+- Uses regenerate prompt with original specs + current TODO + feedback
+- Clears feedback after successful regeneration
+- **Bug Fix**: Validates feedback exists BEFORE state transition
+
+#### Section 6: Infrastructure - IPC Handlers
+- Created `review.ipc.ts` with all review handlers
+- Updated `scaffold.ipc.ts` to pass feedbackRepo
+- Registered review handlers in `index.ts`
+
+#### Section 7: Frontend - TaskItem & TaskList Components
+- `TaskItem` - Displays task with status icon, dependencies, expandable details
+- `TaskList` - Groups tasks by milestone with progress indicators
+
+#### Section 8: Frontend - FeedbackPanel Component
+- Textarea for feedback input
+- Regenerate / Clear / Approve buttons
+- Loading and regenerating states
+
+#### Section 9: Frontend - ReviewPage
+- Tab switching (Tasks / Raw Markdown)
+- TaskList display with milestone grouping
+- FeedbackPanel integration
+- Regenerate flow with modal
+- Approve functionality with state transition
+
+#### Section 10: Integration & Verification
+- TypeCheck: ✓
+- Lint: ✓ (0 errors, 9 pre-existing warnings)
+- Tests: 824 passing, 1 skipped
+
+### Bug Fixes (Post-Review)
+1. **Regenerate: Validate before state transition**
+   - Problem: State transitioned to `scaffolding` before validating feedback
+   - Fix: Validate feedback exists BEFORE state transition, stay in `reviewing` if invalid
+
+2. **Approve: Guard against empty tasks**
+   - Problem: Could approve with zero tasks
+   - Fix: Check TODO.md exists and has tasks before allowing approval
+
+### Commits
+- `89e1f93` feat(m5): add review types and IPC channels
+- `e927af2` feat(m5): add feedback database table and repository
+- `170bd8a` feat(m5): implement TodoParser domain engine
+- `4fc2e51` feat(m5): implement review use cases
+- `6b1c0c3` feat(m5): implement scaffold regeneration with feedback
+- `c4b59b3` feat(m5): add review IPC handlers
+- `5a0e2d9` feat(m5): add TaskItem, TaskList, and FeedbackPanel components
+- `2025f6e` feat(m5): implement ReviewPage with task list and feedback
+- `b452a0c` docs(m5): update TODO.md format documentation
+- `19b10f3` fix(m5): validate before state transition, guard approval
+
+### Next Steps (M6)
+- Implement Execute flow
+- Task execution with Claude Code
+- Progress tracking and status updates
+
+---
+
 ## 2026-01-20 - M4.1.2: Git Operations Review Fixes - Complete
 
 ### Summary
