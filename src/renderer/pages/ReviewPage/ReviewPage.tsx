@@ -14,6 +14,7 @@ import { Modal } from '../../components/primitives/Modal'
 import { TaskList } from '../../components/composites/TaskList'
 import { FeedbackPanel } from '../../components/editors/FeedbackPanel'
 import { MarkdownEditor } from '../../components/editors/MarkdownEditor'
+import { ReviewLayout, ReviewHeader, ReviewBanner } from '../../components/review'
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
 import type { IPCResult } from '@shared/types/ipc.types'
 import type { ExecutionPlan, Feedback } from '@shared/types/execution.types'
@@ -56,7 +57,6 @@ export const ReviewPage: React.FC = () => {
 
   // Ref to store scaffold subscription cleanup function
   const unsubscribeRef = useRef<(() => void) | null>(null)
-  const pageRef = useRef<HTMLDivElement | null>(null)
 
   // Check for unsaved changes (only in raw mode)
   const hasUnsaved = activeTab === 'raw' && rawContent !== savedRawContent
@@ -352,74 +352,59 @@ export const ReviewPage: React.FC = () => {
   // Check if we're in the right state
   const isReviewing = currentVersion.devStatus === 'reviewing'
 
-  return (
-    <div
-      ref={pageRef}
-      className="flex flex-col h-full min-h-0 overflow-hidden p-6"
-      data-page="review"
+  const headerActions = activeTab === 'raw' && (
+    <Button
+      variant={hasUnsaved ? 'primary' : 'secondary'}
+      size="sm"
+      onClick={handleSaveRaw}
+      loading={saving}
+      disabled={!hasUnsaved}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-light tracking-tight text-[#1a1a1a]">
-          Review
-        </h1>
-        {activeTab === 'raw' && (
-          <Button
-            variant={hasUnsaved ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={handleSaveRaw}
-            loading={saving}
-            disabled={!hasUnsaved}
-          >
-            {hasUnsaved ? 'Save Changes' : 'Saved'}
-          </Button>
-        )}
-      </div>
+      {hasUnsaved ? 'Save Changes' : 'Saved'}
+    </Button>
+  )
 
-      {/* Not in reviewing state message */}
-      {!isReviewing && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm">
-          This version is not in the reviewing state. Current status: {currentVersion.devStatus}
-        </div>
-      )}
-
-      {/* Error message */}
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-          {error}
-        </div>
-      )}
-
-      {/* Tabs */}
-      <Tabs
-        tabs={VIEW_TABS}
-        activeKey={activeTab}
-        onChange={handleTabChange}
-        className="mb-4"
-      />
-
-      <div className="flex-1 min-h-0 flex flex-col gap-6 overflow-hidden">
-        {/* Content area */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <Spinner size="lg" />
-            </div>
-          ) : activeTab === 'tasks' ? (
-            <TaskList plan={executionPlan || { milestones: [], totalTasks: 0, completedTasks: 0 }} />
-          ) : (
-            <MarkdownEditor
-              value={rawContent}
-              onChange={setRawContent}
-              placeholder="TODO.md content..."
-              minHeight={400}
-              className="h-full"
-            />
-          )}
-        </div>
-
-        {/* Feedback Panel - only show when in reviewing state */}
-        {isReviewing && (
+  return (
+    <>
+    <ReviewLayout
+      header={<ReviewHeader title="Review" actions={headerActions} />}
+      statusNotice={
+        !isReviewing ? (
+          <ReviewBanner variant="warning">
+            This version is not in the reviewing state. Current status: {currentVersion.devStatus}
+          </ReviewBanner>
+        ) : undefined
+      }
+      errorNotice={
+        error ? <ReviewBanner variant="error">{error}</ReviewBanner> : undefined
+      }
+      tabs={
+        <Tabs
+          tabs={VIEW_TABS}
+          activeKey={activeTab}
+          onChange={handleTabChange}
+          className="mb-4"
+        />
+      }
+      content={
+        loading ? (
+          <div className="flex items-center justify-center h-full">
+            <Spinner size="lg" />
+          </div>
+        ) : activeTab === 'tasks' ? (
+          <TaskList plan={executionPlan || { milestones: [], totalTasks: 0, completedTasks: 0 }} />
+        ) : (
+          <MarkdownEditor
+            value={rawContent}
+            onChange={setRawContent}
+            placeholder="TODO.md content..."
+            minHeight={400}
+            className="h-full"
+          />
+        )
+      }
+      feedback={
+        isReviewing ? (
           <FeedbackPanel
             feedback={feedback}
             onChange={handleFeedbackChange}
@@ -430,8 +415,11 @@ export const ReviewPage: React.FC = () => {
             regenerating={isRegenerating}
             disabled={!isReviewing}
           />
-        )}
-      </div>
+        ) : undefined
+      }
+    >
+      {/* children not used; layout handled via props */}
+    </ReviewLayout>
 
       {/* Regenerate Modal */}
       <Modal
@@ -521,6 +509,6 @@ export const ReviewPage: React.FC = () => {
           )}
         </div>
       </Modal>
-    </div>
+    </>
   )
 }
