@@ -1,9 +1,11 @@
 /**
  * ReviewHeader
  * Top bar for the Review page with title and optional actions.
+ * Wrapper around PageHeader with Review-specific defaults.
  */
 
 import React from 'react'
+import { PageHeader } from '../layout'
 
 export interface ReviewHeaderProps {
   title?: string
@@ -14,14 +16,7 @@ export const ReviewHeader: React.FC<ReviewHeaderProps> = ({
   title = 'Review',
   actions,
 }) => {
-  return (
-    <div className="flex items-center justify-between mb-6">
-      <h1 className="text-2xl font-light tracking-tight text-[#1a1a1a]">
-        {title}
-      </h1>
-      {actions}
-    </div>
-  )
+  return <PageHeader title={title} actions={actions} />
 }
 
 ReviewHeader.displayName = 'ReviewHeader'

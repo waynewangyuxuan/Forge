@@ -13,6 +13,7 @@ import { Spinner } from '../../components/primitives/Spinner'
 import { Modal } from '../../components/primitives/Modal'
 import { MarkdownEditor } from '../../components/editors/MarkdownEditor'
 import { MarkdownPreview } from '../../components/editors/MarkdownPreview'
+import { PageHeader, PageBanner, PageLoading } from '../../components/layout'
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
 import type { SpecFile, IPCResult } from '@shared/types/ipc.types'
 import type { GenerateScaffoldResult } from '@shared/types/scaffold.types'
@@ -270,55 +271,43 @@ export const SpecPage: React.FC = () => {
 
   // Loading state (no version)
   if (!currentVersion) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner size="lg" />
-      </div>
-    )
+    return <PageLoading />
   }
 
   return (
     <div className="flex flex-col h-full p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-light tracking-tight text-[#1a1a1a]">
-          Spec
-        </h1>
-        <div className="flex items-center gap-3">
-          {/* Edit/Preview toggle */}
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={toggleMode}
-          >
-            {mode === 'edit' ? 'Preview' : 'Edit'}
-          </Button>
-          {/* Save button */}
-          <Button
-            variant={hasUnsaved ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={handleSave}
-            loading={saving}
-            disabled={!hasUnsaved}
-          >
-            {hasUnsaved ? 'Save Changes' : 'Saved'}
-          </Button>
-          {/* Generate Scaffold button */}
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleGenerateScaffold}
-            disabled={!canGenerate}
-            title={
-              !canGenerate
-                ? 'Save PRODUCT.md and TECHNICAL.md first'
-                : 'Generate task breakdown with AI'
-            }
-          >
-            Generate Scaffold
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Spec"
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={toggleMode}>
+              {mode === 'edit' ? 'Preview' : 'Edit'}
+            </Button>
+            <Button
+              variant={hasUnsaved ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={handleSave}
+              loading={saving}
+              disabled={!hasUnsaved}
+            >
+              {hasUnsaved ? 'Save Changes' : 'Saved'}
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleGenerateScaffold}
+              disabled={!canGenerate}
+              title={
+                !canGenerate
+                  ? 'Save PRODUCT.md and TECHNICAL.md first'
+                  : 'Generate task breakdown with AI'
+              }
+            >
+              Generate Scaffold
+            </Button>
+          </>
+        }
+      />
 
       {/* Tabs */}
       <Tabs
@@ -328,19 +317,12 @@ export const SpecPage: React.FC = () => {
         className="mb-4"
       />
 
-      {/* Error message */}
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <PageBanner variant="error">{error}</PageBanner>}
 
       {/* Content area */}
       <div className="flex-1 min-h-0">
         {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <Spinner size="lg" />
-          </div>
+          <PageLoading />
         ) : mode === 'edit' ? (
           <MarkdownEditor
             value={content[activeTab]}
