@@ -5,3 +5,4 @@
 
 export { MarkdownEditor, type MarkdownEditorProps } from './MarkdownEditor'
 export { MarkdownPreview, type MarkdownPreviewProps } from './MarkdownPreview'
+export { FeedbackPanel, type FeedbackPanelProps } from './FeedbackPanel'

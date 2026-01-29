@@ -157,6 +157,20 @@ function runMigrations(
         database.exec('ALTER TABLE projects ADD COLUMN github_owner TEXT')
         database.exec('CREATE INDEX IF NOT EXISTS idx_projects_github ON projects(github_owner, github_repo)')
         break
+      case 3:
+        // v2 -> v3: Add feedback table for M5 Review flow
+        database.exec(`
+          CREATE TABLE IF NOT EXISTS feedback (
+            id          TEXT PRIMARY KEY,
+            version_id  TEXT NOT NULL REFERENCES versions(id) ON DELETE CASCADE,
+            content     TEXT NOT NULL,
+            created_at  TEXT NOT NULL,
+            updated_at  TEXT NOT NULL,
+            UNIQUE(version_id)
+          )
+        `)
+        database.exec('CREATE INDEX IF NOT EXISTS idx_feedback_version ON feedback(version_id)')
+        break
       // Add future migrations here as cases
       default:
         console.log(`No migration defined for version ${v}`)

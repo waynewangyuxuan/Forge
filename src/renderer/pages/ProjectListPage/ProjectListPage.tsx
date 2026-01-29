@@ -7,8 +7,8 @@ import React, { useEffect } from 'react'
 import { useServerStore, useVersions } from '../../stores/server.store'
 import { useUIStore } from '../../stores/ui.store'
 import { Button } from '../../components/primitives/Button'
-import { Spinner } from '../../components/primitives/Spinner'
 import { ProjectCard } from '../../components/composites/ProjectCard'
+import { PageHeader, PageLoading } from '../../components/layout'
 
 /**
  * Wrapper to get the active version for a project
@@ -75,22 +75,19 @@ export const ProjectListPage: React.FC = () => {
 
   // Loading state
   if (loading && projects.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner size="lg" />
-      </div>
-    )
+    return <PageLoading />
   }
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-light tracking-tight text-[#1a1a1a]">My Projects</h1>
-        <Button variant="primary" onClick={handleNewProject}>
-          + New Project
-        </Button>
-      </div>
+      <PageHeader
+        title="My Projects"
+        actions={
+          <Button variant="primary" onClick={handleNewProject}>
+            + New Project
+          </Button>
+        }
+      />
 
       {/* Empty state */}
       {projects.length === 0 ? (

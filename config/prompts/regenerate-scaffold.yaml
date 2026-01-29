@@ -1,0 +1,131 @@
+# Regenerate Scaffold Prompt
+# Regenerates TODO.md task breakdown based on user feedback
+#
+# Variables:
+#   - project_name: Name of the project
+#   - product_spec: Content of PRODUCT.md
+#   - technical_spec: Content of TECHNICAL.md
+#   - regulation_spec: Content of REGULATION.md (optional)
+#   - current_todo: Current content of TODO.md
+#   - feedback: User feedback on what to change
+
+name: regenerate-scaffold
+version: "1.0"
+description: Regenerate task breakdown based on user feedback
+
+variables:
+  - name: project_name
+    required: true
+    description: The name of the project
+  - name: product_spec
+    required: true
+    description: Content of PRODUCT.md file
+  - name: technical_spec
+    required: true
+    description: Content of TECHNICAL.md file
+  - name: regulation_spec
+    required: false
+    description: Content of REGULATION.md file (optional)
+  - name: current_todo
+    required: true
+    description: Current content of TODO.md file
+  - name: feedback
+    required: true
+    description: User feedback on what to change
+
+template: |
+  You are an expert software architect. Your task is to REGENERATE a project task breakdown based on user feedback.
+
+  ## Project: {{project_name}}
+
+  ## Original Specifications
+
+  <product_spec>
+  {{product_spec}}
+  </product_spec>
+
+  <technical_spec>
+  {{technical_spec}}
+  </technical_spec>
+
+  {{#if regulation_spec}}
+  <regulation_spec>
+  {{regulation_spec}}
+  </regulation_spec>
+  {{/if}}
+
+  ## Current TODO.md
+
+  <current_todo>
+  {{current_todo}}
+  </current_todo>
+
+  ## User Feedback
+
+  <feedback>
+  {{feedback}}
+  </feedback>
+
+  ## Your Task
+
+  Regenerate the JSON scaffold, addressing the user's feedback while keeping the overall structure consistent.
+
+  ### Requirements
+
+  1. **Address Feedback**: Make changes requested by the user
+  2. **Preserve Good Parts**: Keep tasks that were not criticized
+  3. **Task Granularity**: Each task should be completable in 5-10 minutes by an AI coding assistant
+  4. **Clear Dependencies**: Tasks should have explicit dependencies (use task IDs like "001", "002")
+  5. **Verification**: Each task must have a concrete verification criterion
+  6. **Complete Coverage**: Tasks should cover the entire project from initial setup to completion
+
+  ### Output Format
+
+  Return ONLY a JSON object with this exact structure (no markdown, no explanation):
+
+  ```json
+  {
+    "project": {
+      "name": "project-name",
+      "description": "One sentence project description"
+    },
+    "context": {
+      "architecture": "Key architectural decisions summarized (2-3 sentences)",
+      "conventions": "Code style and naming conventions (2-3 sentences)"
+    },
+    "milestones": [
+      {
+        "id": "M1",
+        "name": "Milestone Name",
+        "description": "Why this milestone exists",
+        "tasks": [
+          {
+            "id": "001",
+            "title": "Short task title",
+            "description": "Detailed description of what to do. Be specific about files to create, functions to implement, etc.",
+            "verification": "How to verify this task is complete. E.g., 'Run npm test and all tests pass' or 'File exists at src/index.ts'",
+            "depends": []
+          },
+          {
+            "id": "002",
+            "title": "Another task",
+            "description": "...",
+            "verification": "...",
+            "depends": ["001"]
+          }
+        ]
+      }
+    ]
+  }
+  ```
+
+  ### Important Guidelines
+
+  - Use sequential numeric IDs: "001", "002", "003"... (padded to 3 digits)
+  - Dependencies should only reference earlier task IDs
+  - Each task should be atomic - one clear thing to do
+  - Verification should be testable (run a command, check a file exists, etc.)
+  - Description should be detailed enough for an AI to execute without asking questions
+  - **Focus on addressing the feedback while maintaining project completeness**
+
+  Now regenerate the JSON scaffold addressing the feedback:
