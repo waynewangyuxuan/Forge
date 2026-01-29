@@ -9,7 +9,7 @@ import { useProject, useVersions, useServerStore } from '../../stores/server.sto
 import { Card } from '../../components/primitives/Card'
 import { Badge } from '../../components/primitives/Badge'
 import { Button } from '../../components/primitives/Button'
-import { Spinner } from '../../components/primitives/Spinner'
+import { PageHeader, PageLoading } from '../../components/layout'
 
 // Dev status display configuration
 const devStatusConfig: Record<string, { variant: 'default' | 'success' | 'warning' | 'error' | 'info'; label: string }> = {
@@ -43,11 +43,7 @@ export const OverviewPage: React.FC = () => {
 
   // Loading state
   if (!project || !currentVersion) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner size="lg" />
-      </div>
-    )
+    return <PageLoading />
   }
 
   const devStatus = devStatusConfig[currentVersion.devStatus] ?? devStatusConfig.drafting
@@ -63,11 +59,7 @@ export const OverviewPage: React.FC = () => {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-light tracking-tight text-[#1a1a1a]">{project.name}</h1>
-        <p className="text-sm text-[#a3a3a3] mt-1 font-mono">{project.path}</p>
-      </div>
+      <PageHeader title={project.name} subtitle={project.path} />
 
       {/* Status Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
