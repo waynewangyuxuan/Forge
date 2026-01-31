@@ -215,16 +215,17 @@ export class GitAdapter implements IGitAdapter {
 
     try {
       const git = this.getGit(path)
-      const commitOptions: string[] = []
 
       if (options?.allowEmpty) {
-        commitOptions.push('--allow-empty')
+        // Use raw to pass --allow-empty flag
+        await git.raw(['commit', '--allow-empty', '-m', message])
+        // Get the commit hash
+        const log = await git.log({ maxCount: 1 })
+        return log.latest?.hash || ''
+      } else {
+        const result = await git.commit(message)
+        return result.commit || ''
       }
-
-      const result = await git.commit(message, undefined, {
-        '--allow-empty': options?.allowEmpty || null,
-      })
-      return result.commit || ''
     } catch (error) {
       throw new GitOperationError('commit', (error as Error).message)
     }

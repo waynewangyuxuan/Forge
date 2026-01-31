@@ -122,10 +122,3 @@ export interface TaskOutput {
   files: FileChange[]
   summary: string
 }
-
-/**
- * Input for starting an execution
- */
-export interface ExecutionStartInput {
-  versionId: string
-}

@@ -866,3 +866,59 @@ Implemented foundational infrastructure for M6 Code Execution milestone. Phase A
 - `src/main/domain/index.ts` - exports
 
 ---
+
+## 2026-01-30 - M6: Code Execution - Phase B (Backend Logic) Complete
+
+### Summary
+Implemented all backend logic for M6 Code Execution including use cases, ExecutionOrchestrator, and IPC handlers.
+
+### Completed Sections
+
+#### Step 7: Use Cases (8 total)
+- `start-execution.ts` - Start execution with pre-execution git snapshot
+- `pause-execution.ts` - Pause running execution
+- `resume-execution.ts` - Resume paused execution
+- `abort-execution.ts` - Abort and git reset to pre-execution state
+- `retry-task.ts` - Retry failed task
+- `skip-task.ts` - Skip blocked/failed task (updates TODO.md)
+- `get-execution-status.ts` - Get execution status
+- `get-stale-executions.ts` - Get stale executions for startup recovery
+
+#### Step 8: ExecutionOrchestrator Service
+- Async execution loop with state persistence
+- Loads and re-parses TODO.md after each task
+- Pause/resume support via SQLite flag polling
+- Emits events to renderer via IPC
+- Handles task failures with pause and user decision
+
+#### Step 9: IPC Handlers
+- Created `execution.ipc.ts` with all 8 handlers
+- Proper error serialization
+- Async execution loop started on `execution:start`
+- Events emitted to all windows
+
+#### Step 10: Register Handlers
+- Added `registerExecutionHandlers()` to IPC index
+- Exported for testing
+
+### Files Created
+- `src/main/application/use-cases/execution/index.ts`
+- `src/main/application/use-cases/execution/start-execution.ts`
+- `src/main/application/use-cases/execution/pause-execution.ts`
+- `src/main/application/use-cases/execution/resume-execution.ts`
+- `src/main/application/use-cases/execution/abort-execution.ts`
+- `src/main/application/use-cases/execution/retry-task.ts`
+- `src/main/application/use-cases/execution/skip-task.ts`
+- `src/main/application/use-cases/execution/get-execution-status.ts`
+- `src/main/application/use-cases/execution/get-stale-executions.ts`
+- `src/main/application/services/index.ts`
+- `src/main/application/services/execution-orchestrator.ts`
+- `src/main/infrastructure/ipc/execution.ipc.ts`
+
+### Files Modified
+- `src/main/application/use-cases/index.ts` - export execution
+- `src/main/infrastructure/ipc/index.ts` - register execution handlers
+- `src/shared/types/runtime.types.ts` - added autoCommitBeforeExecution
+- `src/shared/constants.ts` - added to DEFAULT_SETTINGS
+
+---

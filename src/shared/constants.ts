@@ -75,6 +75,7 @@ export const DEFAULT_SETTINGS = {
   initGit: true,
   commitOnScaffold: true, // Commit when scaffold generation completes
   autoCommitOnMilestone: true, // Commit when milestone completes
+  autoCommitBeforeExecution: false, // Auto-commit dirty tree before execution
   pushStrategy: 'auto' as const, // auto | manual | disabled
   autoPush: false, // Legacy - use pushStrategy instead
   defaultEditor: 'code',

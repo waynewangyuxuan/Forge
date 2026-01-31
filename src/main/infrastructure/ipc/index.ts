@@ -10,6 +10,7 @@ import { registerGitHubHandlers } from './github.ipc'
 import { registerSpecHandlers } from './spec.ipc'
 import { registerScaffoldHandlers } from './scaffold.ipc'
 import { registerReviewHandlers } from './review.ipc'
+import { registerExecutionHandlers } from './execution.ipc'
 
 /**
  * Register all IPC handlers
@@ -23,9 +24,9 @@ export function registerAllIPCHandlers(): void {
   registerSpecHandlers()
   registerScaffoldHandlers()
   registerReviewHandlers()
+  registerExecutionHandlers()
 
   // Future handlers will be registered here:
-  // registerExecutionHandlers()
   // registerRuntimeHandlers()
   // registerDashboardHandlers()
   // registerCredentialsHandlers()
@@ -40,3 +41,4 @@ export { registerGitHubHandlers } from './github.ipc'
 export { registerSpecHandlers } from './spec.ipc'
 export { registerScaffoldHandlers } from './scaffold.ipc'
 export { registerReviewHandlers } from './review.ipc'
+export { registerExecutionHandlers } from './execution.ipc'

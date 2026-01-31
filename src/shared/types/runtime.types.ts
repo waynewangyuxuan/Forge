@@ -93,6 +93,7 @@ export interface Settings {
   initGit: boolean
   commitOnScaffold: boolean // Commit when scaffold generation completes
   autoCommitOnMilestone: boolean // Commit when milestone completes
+  autoCommitBeforeExecution: boolean // Auto-commit dirty tree before execution
   pushStrategy: PushStrategy // auto: push after commit, manual: user pushes, disabled: never push
   autoPush: boolean // Legacy - use pushStrategy instead. Kept for backwards compatibility
   defaultEditor: string // e.g., "code" for VSCode
