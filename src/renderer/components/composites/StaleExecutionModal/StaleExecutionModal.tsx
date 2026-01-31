@@ -7,7 +7,6 @@ import React, { useState } from 'react'
 import { Modal } from '../../primitives/Modal'
 import { Button } from '../../primitives/Button'
 import type { Execution } from '@shared/types/execution.types'
-import type { IPCResult } from '@shared/types/ipc.types'
 
 export interface StaleExecutionModalProps {
   executions: Execution[]

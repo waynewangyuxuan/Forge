@@ -380,8 +380,8 @@ describe('RealtimeStore', () => {
       const unsubscribe = subscribeExecution('version-123', 'exec-456')
       unsubscribe()
 
-      // Should call all unsubscribe functions (5 events)
-      expect(mockUnsubscribe).toHaveBeenCalledTimes(5)
+      // Should call all unsubscribe functions (9 events: progress, taskStart, taskDone, taskFailed, completed, paused, resumed, blocked, error)
+      expect(mockUnsubscribe).toHaveBeenCalledTimes(9)
     })
   })
 
