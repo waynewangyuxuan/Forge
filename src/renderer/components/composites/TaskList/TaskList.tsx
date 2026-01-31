@@ -10,13 +10,15 @@ import { Badge } from '../../primitives/Badge'
 
 export interface TaskListProps {
   plan: ExecutionPlan
+  currentTaskId?: string
 }
 
 interface MilestoneGroupProps {
   milestone: Milestone
+  currentTaskId?: string
 }
 
-const MilestoneGroup: React.FC<MilestoneGroupProps> = ({ milestone }) => {
+const MilestoneGroup: React.FC<MilestoneGroupProps> = ({ milestone, currentTaskId }) => {
   const progressPercent = milestone.totalCount > 0
     ? Math.round((milestone.completedCount / milestone.totalCount) * 100)
     : 0
@@ -56,7 +58,7 @@ const MilestoneGroup: React.FC<MilestoneGroupProps> = ({ milestone }) => {
       <div className="border border-stone-200 rounded-b-lg overflow-hidden">
         {milestone.tasks.length > 0 ? (
           milestone.tasks.map((task) => (
-            <TaskItem key={task.id} task={task} />
+            <TaskItem key={task.id} task={task} isCurrent={task.id === currentTaskId} />
           ))
         ) : (
           <p className="text-sm text-stone-400 text-center py-4">No tasks in this milestone</p>
@@ -66,7 +68,7 @@ const MilestoneGroup: React.FC<MilestoneGroupProps> = ({ milestone }) => {
   )
 }
 
-export const TaskList: React.FC<TaskListProps> = ({ plan }) => {
+export const TaskList: React.FC<TaskListProps> = ({ plan, currentTaskId }) => {
   if (!plan.milestones || plan.milestones.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-stone-500">
@@ -108,7 +110,7 @@ export const TaskList: React.FC<TaskListProps> = ({ plan }) => {
 
       {/* Milestones */}
       {plan.milestones.map((milestone) => (
-        <MilestoneGroup key={milestone.id} milestone={milestone} />
+        <MilestoneGroup key={milestone.id} milestone={milestone} currentTaskId={currentTaskId} />
       ))}
     </div>
   )

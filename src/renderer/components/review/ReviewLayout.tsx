@@ -9,7 +9,7 @@ export interface ReviewLayoutProps {
   header: React.ReactNode
   statusNotice?: React.ReactNode
   errorNotice?: React.ReactNode
-  tabs: React.ReactNode
+  tabs?: React.ReactNode
   content: React.ReactNode
   feedback?: React.ReactNode
 }

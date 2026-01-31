@@ -11,6 +11,7 @@ import { OverviewPage } from './pages/OverviewPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SpecPage } from './pages/SpecPage'
 import { ReviewPage } from './pages/ReviewPage'
+import { ExecutePage } from './pages/ExecutePage'
 
 // Placeholder page for routes not yet implemented
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -58,7 +59,7 @@ export const router = createHashRouter([
           },
           {
             path: 'execute',
-            element: <PlaceholderPage title="Execute" />,
+            element: <ExecutePage />,
           },
           // Runtime flow
           {

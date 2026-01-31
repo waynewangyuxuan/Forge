@@ -922,3 +922,66 @@ Implemented all backend logic for M6 Code Execution including use cases, Executi
 - `src/shared/constants.ts` - added to DEFAULT_SETTINGS
 
 ---
+
+## 2026-01-30 - M6: Code Execution - Phase C (Frontend) Complete
+
+### Summary
+Implemented all frontend components for M6 Code Execution including stores, UI components, ExecutePage, and startup recovery.
+
+### Completed Sections
+
+#### Step 11: realtime.store.ts Updates
+- Added `blockedTaskIds` to `ExecutionState` interface
+- Added event handlers for `execution:paused`, `execution:resumed`, `execution:blocked`, `execution:error`
+- Updated cleanup function to unsubscribe all new handlers
+
+#### Step 12: server.store.ts Updates
+- Added `Execution` type import
+- Added `staleExecutions` state array
+- Added `staleExecutions: boolean` to LoadingState
+- Implemented `checkStaleExecutions()` action
+- Implemented `clearStaleExecution()` action
+
+#### Step 13: UI Components
+- Created `ProgressBar` component with progress percentage display
+- Created `BlockedTasksBanner` component for blocked task handling
+- Updated `TaskList` to accept `currentTaskId` prop
+- Updated `TaskItem` to accept `isCurrent` prop with highlight styling
+- Made `tabs` prop optional in `ReviewLayout`
+
+#### Step 14: ExecutePage
+- Created `ExecutePage` with full execution controls
+- Start/Pause/Resume/Abort buttons based on state
+- Progress bar with current task display
+- Error banner when task fails
+- Blocked tasks banner when execution blocked
+- Task list with current task highlight
+- Updated router to use ExecutePage
+
+#### Step 15: StaleExecutionModal + Recovery Hook
+- Created `StaleExecutionModal` component
+- Shows execution details (started, progress, status)
+- Resume and Abort buttons with loading states
+- Added recovery hook in `RootLayout` to check on app mount
+
+### Files Created
+- `src/renderer/components/composites/ProgressBar/ProgressBar.tsx`
+- `src/renderer/components/composites/ProgressBar/index.ts`
+- `src/renderer/components/composites/BlockedTasksBanner/BlockedTasksBanner.tsx`
+- `src/renderer/components/composites/BlockedTasksBanner/index.ts`
+- `src/renderer/components/composites/StaleExecutionModal/StaleExecutionModal.tsx`
+- `src/renderer/components/composites/StaleExecutionModal/index.ts`
+- `src/renderer/pages/ExecutePage/ExecutePage.tsx`
+- `src/renderer/pages/ExecutePage/index.ts`
+
+### Files Modified
+- `src/renderer/stores/realtime.store.ts` - new event handlers
+- `src/renderer/stores/server.store.ts` - staleExecutions state
+- `src/renderer/components/composites/TaskList/TaskList.tsx` - currentTaskId prop
+- `src/renderer/components/composites/TaskItem/TaskItem.tsx` - isCurrent prop
+- `src/renderer/components/composites/index.ts` - new exports
+- `src/renderer/components/review/ReviewLayout.tsx` - optional tabs
+- `src/renderer/router.tsx` - use ExecutePage
+- `src/renderer/RootLayout.tsx` - stale execution recovery
+
+---

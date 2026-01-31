@@ -6,6 +6,7 @@
 import { create } from 'zustand'
 import type { Project, Version, CreateProjectInput, CreateVersionInput } from '@shared/types/project.types'
 import type { Credential, AddCredentialInput, Settings } from '@shared/types/runtime.types'
+import type { Execution } from '@shared/types/execution.types'
 import type { IPCResult, ProjectDeleteOutput } from '@shared/types/ipc.types'
 import { invokeTyped, unwrapResult } from '../lib/ipc'
 
@@ -17,6 +18,7 @@ interface LoadingState {
   versions: boolean
   credentials: boolean
   settings: boolean
+  staleExecutions: boolean
 }
 
 /**
@@ -38,6 +40,9 @@ interface ServerStore {
 
   // Settings
   settings: Settings | null
+
+  // Stale executions (for startup recovery)
+  staleExecutions: Execution[]
 
   // Loading states
   loading: LoadingState
@@ -69,6 +74,11 @@ interface ServerStore {
 
   fetchSettings: () => Promise<void>  // Pattern A
   updateSettings: (updates: Partial<Settings>) => Promise<IPCResult<Settings>>  // Pattern B
+
+  // ========== Stale Executions Actions ==========
+
+  checkStaleExecutions: () => Promise<void>  // Pattern A
+  clearStaleExecution: (executionId: string) => void
 }
 
 export const useServerStore = create<ServerStore>((set) => ({
@@ -78,11 +88,13 @@ export const useServerStore = create<ServerStore>((set) => ({
   currentVersionId: {},
   credentials: [],
   settings: null,
+  staleExecutions: [],
   loading: {
     projects: false,
     versions: false,
     credentials: false,
     settings: false,
+    staleExecutions: false,
   },
 
   // ========== Project Actions ==========
@@ -272,6 +284,29 @@ export const useServerStore = create<ServerStore>((set) => ({
       set({ settings: result.data })
     }
     return result
+  },
+
+  // ========== Stale Executions Actions ==========
+
+  checkStaleExecutions: async () => {
+    set((s) => ({ loading: { ...s.loading, staleExecutions: true } }))
+    try {
+      const result = await invokeTyped('execution:getStale', undefined)
+      const staleExecutions = unwrapResult(result)  // throws if !ok
+      set({ staleExecutions })
+    } catch (error) {
+      console.error('Failed to check stale executions:', error)
+      // Don't throw - this is a non-critical check
+      set({ staleExecutions: [] })
+    } finally {
+      set((s) => ({ loading: { ...s.loading, staleExecutions: false } }))
+    }
+  },
+
+  clearStaleExecution: (executionId: string) => {
+    set((s) => ({
+      staleExecutions: s.staleExecutions.filter((e) => e.id !== executionId),
+    }))
   },
 }))
 

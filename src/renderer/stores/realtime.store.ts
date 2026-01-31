@@ -27,6 +27,7 @@ export interface ExecutionState {
   currentTaskId?: string
   currentTaskDescription?: string
   error?: string
+  blockedTaskIds?: string[]
 }
 
 /**
@@ -288,6 +289,94 @@ export const useRealtimeStore = create<RealtimeStore>((set, get) => ({
       })
     })
 
+    // Subscribe to paused
+    const unsubPaused = window.api.on('execution:paused', (data) => {
+      const { executionId: eid } = data as { executionId: string }
+      if (eid !== executionId) return
+
+      set((s) => {
+        const current = s.executions[executionId]
+        if (!current) return s
+        return {
+          executions: {
+            ...s.executions,
+            [executionId]: {
+              ...current,
+              status: 'paused',
+            },
+          },
+        }
+      })
+    })
+
+    // Subscribe to resumed
+    const unsubResumed = window.api.on('execution:resumed', (data) => {
+      const { executionId: eid } = data as { executionId: string }
+      if (eid !== executionId) return
+
+      set((s) => {
+        const current = s.executions[executionId]
+        if (!current) return s
+        return {
+          executions: {
+            ...s.executions,
+            [executionId]: {
+              ...current,
+              status: 'running',
+            },
+          },
+        }
+      })
+    })
+
+    // Subscribe to blocked
+    const unsubBlocked = window.api.on('execution:blocked', (data) => {
+      const { executionId: eid, blockedTaskIds } = data as {
+        executionId: string
+        blockedTaskIds: string[]
+      }
+      if (eid !== executionId) return
+
+      set((s) => {
+        const current = s.executions[executionId]
+        if (!current) return s
+        return {
+          executions: {
+            ...s.executions,
+            [executionId]: {
+              ...current,
+              status: 'paused',
+              blockedTaskIds,
+            },
+          },
+        }
+      })
+    })
+
+    // Subscribe to error
+    const unsubError = window.api.on('execution:error', (data) => {
+      const { executionId: eid, error } = data as {
+        executionId: string
+        error: string
+      }
+      if (eid !== executionId) return
+
+      set((s) => {
+        const current = s.executions[executionId]
+        if (!current) return s
+        return {
+          executions: {
+            ...s.executions,
+            [executionId]: {
+              ...current,
+              status: 'error',
+              error,
+            },
+          },
+        }
+      })
+    })
+
     // Return cleanup function
     return () => {
       unsubProgress()
@@ -295,6 +384,10 @@ export const useRealtimeStore = create<RealtimeStore>((set, get) => ({
       unsubTaskDone()
       unsubTaskFailed()
       unsubCompleted()
+      unsubPaused()
+      unsubResumed()
+      unsubBlocked()
+      unsubError()
     }
   },
 

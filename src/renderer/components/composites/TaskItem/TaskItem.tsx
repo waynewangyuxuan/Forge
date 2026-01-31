@@ -9,6 +9,7 @@ import { Badge } from '../../primitives/Badge'
 
 export interface TaskItemProps {
   task: Task
+  isCurrent?: boolean
 }
 
 // Status icons mapping
@@ -46,15 +47,21 @@ const statusIcons: Record<string, React.ReactNode> = {
   ),
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, isCurrent = false }) => {
   const [isExpanded, setIsExpanded] = useState(false)
   const hasDetails = task.description || task.verification
 
+  // Use isCurrent to highlight the current task
+  const baseClasses = isCurrent
+    ? 'bg-amber-50 border-l-2 border-l-amber-500'
+    : ''
+  const hoverClasses = hasDetails ? 'cursor-pointer hover:bg-stone-50' : ''
+
   return (
-    <div className="border-b border-stone-100 last:border-b-0">
+    <div className={`border-b border-stone-100 last:border-b-0 ${baseClasses}`}>
       {/* Main row */}
       <div
-        className={`flex items-start gap-3 py-3 px-4 ${hasDetails ? 'cursor-pointer hover:bg-stone-50' : ''}`}
+        className={`flex items-start gap-3 py-3 px-4 ${hoverClasses}`}
         onClick={hasDetails ? () => setIsExpanded(!isExpanded) : undefined}
       >
         {/* Status icon */}
