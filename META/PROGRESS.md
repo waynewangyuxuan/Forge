@@ -785,3 +785,84 @@ files: hook.commit.files.length > 0
 - Tests: 769 passing
 
 ---
+
+## 2026-01-30 - M6: Code Execution - Phase A (Foundation) Complete
+
+### Summary
+Implemented foundational infrastructure for M6 Code Execution milestone. Phase A establishes all shared types, database schema, adapters, repositories, and domain engines.
+
+### Design Decisions
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Code Landing | Structured output | Claude returns JSON with file paths + content. Orchestrator validates and writes. |
+| Skip Behavior | Blocks dependents | Skipped tasks don't satisfy dependencies. Clearer causality. |
+| Restart Recovery | Prompt user | Detect stale 'executing' on startup, prompt: Resume or Abort. |
+| Abort Behavior | Git reset | Reset to pre-execution commit. Clean slate for retry. |
+
+### Completed Sections
+
+#### Step 1: Schema Migration v4
+- Incremented `SCHEMA_VERSION` to 4 in `schema.ts`
+- Added `pre_execution_commit TEXT` and `is_paused INTEGER` columns to executions table
+- Created `MIGRATION_V3_TO_V4` SQL migration
+- Updated `index.ts` migration logic for case 4
+
+#### Step 2: Adapter Interface Updates
+- Added `rename(oldPath, newPath)` to `IFileSystemAdapter` for atomic file writes
+- Added `reset(path, commitSha, mode)` to `IGitAdapter` for abort rollback
+- Added `commitWithOptions(path, message, options)` to `IGitAdapter` for empty snapshot commits
+
+#### Step 3: Adapter Implementations
+- Implemented `rename()` in `file-system.adapter.ts` using `fs.promises.rename()`
+- Implemented `reset()` in `git.adapter.ts` using `simple-git` reset
+- Implemented `commitWithOptions()` in `git.adapter.ts` with `--allow-empty` support
+
+#### Step 4: Type Updates
+- Added `paused` to `ExecutionStatus` union type
+- Extended `Execution` interface with `preExecutionCommit` and `isPaused`
+- Added `FileChange`, `FileChangeAction`, `TaskOutput`, `ExecutionStartInput` types
+- Added execution IPC channels to `IPCChannelMap`:
+  - `execution:start`, `execution:pause`, `execution:resume`, `execution:abort`
+  - `execution:retry`, `execution:skip`, `execution:getStatus`, `execution:getStale`
+- Added new event types: `ExecutionPausedEvent`, `ExecutionResumedEvent`, `ExecutionBlockedEvent`, `ExecutionCompletedEvent`, `ExecutionErrorEvent`
+
+#### Step 5: Repository Implementations
+- Extended `IExecutionRepository` with: `findRunningOrPaused()`, `setPaused()`, `setPreExecutionCommit()`, `updateStatus()`
+- Created `sqlite-execution.repo.ts` implementing full `IExecutionRepository`
+- Created `sqlite-task-attempt.repo.ts` implementing `ITaskAttemptRepository`
+- Exported new repositories from `repositories/index.ts`
+
+#### Step 6: Domain Engines
+- Created `plan-calculator.ts`:
+  - `getNextTask()` - finds next executable task respecting dependencies
+  - `getProgress()` - calculates completion percentage
+  - `isAllCompleted()` - checks if all tasks done
+  - `getBlockedTasks()` - finds tasks blocked by dependencies
+  - `findTaskById()` - lookup helper
+  - `updateTaskStatus()` - immutable status update
+- Created `code-writer.ts`:
+  - `extractTaskOutputJson()` - parses Claude's structured output
+  - `validateTaskOutput()` - validates paths and structure
+  - `writeTaskOutput()` - writes files atomically
+  - `updateTodoTaskStatus()` - marks tasks complete in TODO.md
+  - `atomicUpdateTodoStatus()` - atomic TODO.md update
+
+### Files Created
+- `src/main/infrastructure/repositories/sqlite-execution.repo.ts`
+- `src/main/infrastructure/repositories/sqlite-task-attempt.repo.ts`
+- `src/main/domain/engines/plan-calculator.ts`
+- `src/main/domain/engines/code-writer.ts`
+
+### Files Modified
+- `src/main/infrastructure/database/schema.ts` - schema v4
+- `src/main/infrastructure/database/index.ts` - migration v4
+- `src/shared/interfaces/adapters.ts` - new methods
+- `src/shared/interfaces/repositories.ts` - extended IExecutionRepository
+- `src/shared/types/execution.types.ts` - new types
+- `src/shared/types/ipc.types.ts` - execution channels
+- `src/main/infrastructure/adapters/file-system.adapter.ts` - rename()
+- `src/main/infrastructure/adapters/git.adapter.ts` - reset(), commitWithOptions()
+- `src/main/infrastructure/repositories/index.ts` - exports
+- `src/main/domain/index.ts` - exports
+
+---

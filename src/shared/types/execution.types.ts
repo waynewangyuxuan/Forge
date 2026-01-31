@@ -6,7 +6,7 @@
 /**
  * Execution status for a code generation run
  */
-export type ExecutionStatus = 'running' | 'completed' | 'failed' | 'aborted'
+export type ExecutionStatus = 'running' | 'paused' | 'completed' | 'failed' | 'aborted'
 
 /**
  * Task attempt status
@@ -25,6 +25,8 @@ export interface Execution {
   totalTasks: number
   completedTasks: number
   currentTaskId: string | null
+  preExecutionCommit: string | null // Git commit SHA before execution started
+  isPaused: boolean // Persisted pause flag
 }
 
 /**
@@ -96,4 +98,34 @@ export interface ExecutionProgress {
   percent: number
   currentTaskId?: string
   currentTaskDescription?: string
+}
+
+/**
+ * File change action in structured output
+ */
+export type FileChangeAction = 'create' | 'update' | 'delete'
+
+/**
+ * Single file change from Claude's structured output
+ */
+export interface FileChange {
+  path: string // Relative to project root
+  action: FileChangeAction
+  content?: string // For create/update
+}
+
+/**
+ * Claude's structured output for a task
+ */
+export interface TaskOutput {
+  taskId: string
+  files: FileChange[]
+  summary: string
+}
+
+/**
+ * Input for starting an execution
+ */
+export interface ExecutionStartInput {
+  versionId: string
 }

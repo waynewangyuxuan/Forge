@@ -171,6 +171,11 @@ function runMigrations(
         `)
         database.exec('CREATE INDEX IF NOT EXISTS idx_feedback_version ON feedback(version_id)')
         break
+      case 4:
+        // v3 -> v4: Add execution state columns for M6 execution flow
+        database.exec('ALTER TABLE executions ADD COLUMN pre_execution_commit TEXT')
+        database.exec('ALTER TABLE executions ADD COLUMN is_paused INTEGER NOT NULL DEFAULT 0')
+        break
       // Add future migrations here as cases
       default:
         console.log(`No migration defined for version ${v}`)

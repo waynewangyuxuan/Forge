@@ -6,7 +6,7 @@
 /**
  * Schema version for migrations
  */
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
 
 /**
  * Projects table - stores project metadata
@@ -58,17 +58,20 @@ CREATE INDEX IF NOT EXISTS idx_versions_project ON versions(project_id);
 
 /**
  * Executions table - stores code generation execution records
+ * v4: Added pre_execution_commit and is_paused for M6 execution flow
  */
 export const CREATE_EXECUTIONS_TABLE = `
 CREATE TABLE IF NOT EXISTS executions (
-  id              TEXT PRIMARY KEY,
-  version_id      TEXT NOT NULL REFERENCES versions(id) ON DELETE CASCADE,
-  started_at      TEXT NOT NULL,
-  completed_at    TEXT,
-  status          TEXT NOT NULL,
-  total_tasks     INTEGER NOT NULL,
-  completed_tasks INTEGER NOT NULL DEFAULT 0,
-  current_task_id TEXT
+  id                    TEXT PRIMARY KEY,
+  version_id            TEXT NOT NULL REFERENCES versions(id) ON DELETE CASCADE,
+  started_at            TEXT NOT NULL,
+  completed_at          TEXT,
+  status                TEXT NOT NULL,
+  total_tasks           INTEGER NOT NULL,
+  completed_tasks       INTEGER NOT NULL DEFAULT 0,
+  current_task_id       TEXT,
+  pre_execution_commit  TEXT,
+  is_paused             INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_executions_version ON executions(version_id);
@@ -181,6 +184,15 @@ CREATE TABLE IF NOT EXISTS feedback (
 );
 
 CREATE INDEX IF NOT EXISTS idx_feedback_version ON feedback(version_id);
+`
+
+/**
+ * Migration SQL from schema version 3 to 4
+ * Adds pre_execution_commit and is_paused columns to executions table for M6 execution flow
+ */
+export const MIGRATION_V3_TO_V4 = `
+ALTER TABLE executions ADD COLUMN pre_execution_commit TEXT;
+ALTER TABLE executions ADD COLUMN is_paused INTEGER NOT NULL DEFAULT 0;
 `
 
 /**

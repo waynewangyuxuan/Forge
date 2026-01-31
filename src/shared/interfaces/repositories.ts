@@ -48,6 +48,7 @@ export interface IExecutionRepository {
   findById(id: string): Promise<Execution | null>
   findByVersion(versionId: string): Promise<Execution[]>
   findRunning(): Promise<Execution[]>
+  findRunningOrPaused(): Promise<Execution[]> // For startup recovery
 
   // Commands
   create(input: Omit<Execution, 'id'>): Promise<Execution>
@@ -56,6 +57,11 @@ export interface IExecutionRepository {
     update: { completedTasks: number; currentTaskId?: string | null }
   ): Promise<void>
   complete(id: string, status: 'completed' | 'failed' | 'aborted'): Promise<void>
+
+  // Pause/Resume support
+  setPaused(id: string, isPaused: boolean): Promise<void>
+  setPreExecutionCommit(id: string, commitSha: string): Promise<void>
+  updateStatus(id: string, status: Execution['status']): Promise<void>
 }
 
 /**

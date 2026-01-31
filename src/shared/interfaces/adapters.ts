@@ -21,6 +21,9 @@ export interface IFileSystemAdapter {
   // Delete operations
   remove(path: string): Promise<void>
 
+  // Rename operations (atomic for safe file updates)
+  rename(oldPath: string, newPath: string): Promise<void>
+
   // Watch operations
   watch(path: string, callback: (event: FileChangeEvent) => void): WatchHandle
 }
@@ -165,6 +168,16 @@ export interface IGitAdapter {
   // Remote operations
   hasRemote(path: string): Promise<boolean>
   getRemoteUrl(path: string): Promise<string | null>
+
+  // Reset operations (for abort rollback)
+  reset(path: string, commitSha: string, mode: 'soft' | 'hard'): Promise<void>
+
+  // Commit with options (for empty snapshot commits)
+  commitWithOptions(
+    path: string,
+    message: string,
+    options?: { allowEmpty?: boolean }
+  ): Promise<string>
 }
 
 /**

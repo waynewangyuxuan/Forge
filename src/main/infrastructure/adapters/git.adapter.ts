@@ -185,6 +185,52 @@ export class GitAdapter implements IGitAdapter {
   }
 
   /**
+   * Reset to a specific commit
+   * Used for abort rollback
+   */
+  async reset(
+    path: string,
+    commitSha: string,
+    mode: 'soft' | 'hard'
+  ): Promise<void> {
+    await this.ensureRepo(path)
+
+    try {
+      const git = this.getGit(path)
+      await git.reset([`--${mode}`, commitSha])
+    } catch (error) {
+      throw new GitOperationError('reset', (error as Error).message)
+    }
+  }
+
+  /**
+   * Commit with options (for empty snapshot commits)
+   */
+  async commitWithOptions(
+    path: string,
+    message: string,
+    options?: { allowEmpty?: boolean }
+  ): Promise<string> {
+    await this.ensureRepo(path)
+
+    try {
+      const git = this.getGit(path)
+      const commitOptions: string[] = []
+
+      if (options?.allowEmpty) {
+        commitOptions.push('--allow-empty')
+      }
+
+      const result = await git.commit(message, undefined, {
+        '--allow-empty': options?.allowEmpty || null,
+      })
+      return result.commit || ''
+    } catch (error) {
+      throw new GitOperationError('commit', (error as Error).message)
+    }
+  }
+
+  /**
    * Helper to ensure path is a git repository
    */
   private async ensureRepo(path: string): Promise<void> {

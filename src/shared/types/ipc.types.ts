@@ -24,7 +24,7 @@ import {
   GenerateScaffoldInput,
   GenerateScaffoldResult,
 } from './scaffold.types'
-import { ExecutionPlan, Feedback } from './execution.types'
+import { Execution, ExecutionPlan, Feedback } from './execution.types'
 import { ErrorCode, WarningCode } from '../constants'
 
 // ============================================================
@@ -365,6 +365,28 @@ export interface ExecutionTaskFailedEvent {
   error: string
 }
 
+export interface ExecutionPausedEvent {
+  executionId: string
+}
+
+export interface ExecutionResumedEvent {
+  executionId: string
+}
+
+export interface ExecutionBlockedEvent {
+  executionId: string
+  blockedTaskIds: string[]
+}
+
+export interface ExecutionCompletedEvent {
+  executionId: string
+}
+
+export interface ExecutionErrorEvent {
+  executionId: string
+  error: string
+}
+
 export interface RuntimeStartedEvent {
   runId: string
   versionId: string
@@ -465,6 +487,16 @@ export interface IPCChannelMap {
   'review:clearFeedback': { input: ReviewClearFeedbackInput; output: IPCResult<void> }
   'review:regenerate': { input: ReviewRegenerateInput; output: IPCResult<void> }
   'review:approve': { input: ReviewApproveInput; output: IPCResult<void> }
+
+  // Execution - all return IPCResult<T>
+  'execution:start': { input: ExecutionStartInput; output: IPCResult<Execution> }
+  'execution:pause': { input: ExecutionPauseInput; output: IPCResult<void> }
+  'execution:resume': { input: ExecutionResumeInput; output: IPCResult<void> }
+  'execution:abort': { input: ExecutionAbortInput; output: IPCResult<void> }
+  'execution:retry': { input: ExecutionRetryInput; output: IPCResult<void> }
+  'execution:skip': { input: ExecutionSkipInput; output: IPCResult<void> }
+  'execution:getStatus': { input: ExecutionGetStatusInput; output: IPCResult<Execution> }
+  'execution:getStale': { input: void; output: IPCResult<Execution[]> }
 }
 
 /**

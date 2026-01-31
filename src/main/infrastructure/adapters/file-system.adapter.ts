@@ -132,6 +132,14 @@ export class FileSystemAdapter implements IFileSystemAdapter {
   }
 
   /**
+   * Atomically rename a file or directory
+   * Used for safe file updates (write to temp, then rename)
+   */
+  async rename(oldPath: string, newPath: string): Promise<void> {
+    await fsPromises.rename(oldPath, newPath)
+  }
+
+  /**
    * Watch a path for changes
    * Returns a handle with stop() method to stop watching
    */
