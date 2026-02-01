@@ -3,12 +3,15 @@
  * Resumes a paused execution
  */
 
-import { IExecutionRepository } from '@shared/interfaces/repositories'
+import { IExecutionRepository, IVersionRepository } from '@shared/interfaces/repositories'
 import { ValidationError, NotFoundError } from '@shared/errors'
 import { ExecutionResumeInput } from '@shared/types/ipc.types'
+import { createStateMachine } from '../../../domain'
+import { loadDevFlowStateMachine } from '../../../infrastructure/config-loader'
 
 export interface ResumeExecutionDeps {
   executionRepo: IExecutionRepository
+  versionRepo: IVersionRepository
 }
 
 /**
@@ -21,7 +24,7 @@ export async function resumeExecution(
   input: ExecutionResumeInput,
   deps: ResumeExecutionDeps
 ): Promise<void> {
-  const { executionRepo } = deps
+  const { executionRepo, versionRepo } = deps
 
   // Validate input
   if (!input.executionId || input.executionId.trim() === '') {
@@ -41,6 +44,18 @@ export async function resumeExecution(
       'status'
     )
   }
+
+  // Get version to update devStatus via state machine
+  const version = await versionRepo.findById(execution.versionId)
+  if (!version) {
+    throw new NotFoundError('Version', execution.versionId)
+  }
+
+  // Transition version to executing state via state machine
+  const stateMachineConfig = loadDevFlowStateMachine()
+  const stateMachine = createStateMachine(stateMachineConfig)
+  const executingState = stateMachine.transition(version.devStatus, 'RESUME')
+  await versionRepo.updateStatus(version.id, { devStatus: executingState })
 
   // Clear paused flag and update status
   await executionRepo.setPaused(input.executionId, false)

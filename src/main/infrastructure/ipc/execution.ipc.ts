@@ -28,6 +28,13 @@ import {
 import { getFileSystemAdapter } from '../adapters/file-system.adapter'
 import { getGitAdapter } from '../adapters/git.adapter'
 import { getClaudeAdapter } from '../adapters/claude.adapter'
+import { loadExecutionConfig } from '../config-loader'
+
+/**
+ * Track running execution loops
+ * Used to detect if a stale execution needs its loop restarted
+ */
+const runningExecutions = new Set<string>()
 
 /**
  * Send event to all renderer windows
@@ -88,6 +95,8 @@ export function registerExecutionHandlers(): void {
 
         // Start the execution loop asynchronously
         const events = createEventEmitters()
+        const executionConfig = loadExecutionConfig()
+        runningExecutions.add(execution.id)
         runExecutionLoop(execution, {
           projectRepo,
           versionRepo,
@@ -96,13 +105,20 @@ export function registerExecutionHandlers(): void {
           fs,
           claude,
           events,
-        }).catch((error) => {
-          // Handle any unhandled errors in the loop
-          events.emitError({
-            executionId: execution.id,
-            error: error instanceof Error ? error.message : String(error),
-          })
+        }, {
+          taskTimeout: executionConfig.taskTimeout,
+          maxRetries: executionConfig.maxRetries,
         })
+          .catch((error) => {
+            // Handle any unhandled errors in the loop
+            events.emitError({
+              executionId: execution.id,
+              error: error instanceof Error ? error.message : String(error),
+            })
+          })
+          .finally(() => {
+            runningExecutions.delete(execution.id)
+          })
 
         return { ok: true, data: execution }
       } catch (error) {
@@ -116,7 +132,7 @@ export function registerExecutionHandlers(): void {
     'execution:pause',
     async (_event, input): Promise<IPCResult<void>> => {
       try {
-        await pauseExecution(input, { executionRepo })
+        await pauseExecution(input, { executionRepo, versionRepo })
         return { ok: true, data: undefined }
       } catch (error) {
         return { ok: false, error: serializeError(error) }
@@ -129,7 +145,39 @@ export function registerExecutionHandlers(): void {
     'execution:resume',
     async (_event, input): Promise<IPCResult<void>> => {
       try {
-        await resumeExecution(input, { executionRepo })
+        await resumeExecution(input, { executionRepo, versionRepo })
+
+        // If the execution loop is not running (e.g., after app restart), restart it
+        if (!runningExecutions.has(input.executionId)) {
+          const execution = await executionRepo.findById(input.executionId)
+          if (execution && execution.status === 'running') {
+            const events = createEventEmitters()
+            const executionConfig = loadExecutionConfig()
+            runningExecutions.add(execution.id)
+            runExecutionLoop(execution, {
+              projectRepo,
+              versionRepo,
+              executionRepo,
+              taskAttemptRepo,
+              fs,
+              claude,
+              events,
+            }, {
+              taskTimeout: executionConfig.taskTimeout,
+              maxRetries: executionConfig.maxRetries,
+            })
+              .catch((error) => {
+                events.emitError({
+                  executionId: execution.id,
+                  error: error instanceof Error ? error.message : String(error),
+                })
+              })
+              .finally(() => {
+                runningExecutions.delete(execution.id)
+              })
+          }
+        }
+
         return { ok: true, data: undefined }
       } catch (error) {
         return { ok: false, error: serializeError(error) }
@@ -189,6 +237,28 @@ export function registerExecutionHandlers(): void {
           executionRepo,
           fs,
         })
+
+        // Emit progress event after skip
+        const execution = await executionRepo.findById(input.executionId)
+        if (execution) {
+          // Emit task done (skipped)
+          sendToAllWindows('execution:task:done', {
+            executionId: input.executionId,
+            taskId: input.taskId,
+          })
+
+          // Emit progress update
+          const percent = execution.totalTasks > 0
+            ? Math.round((execution.completedTasks / execution.totalTasks) * 100)
+            : 0
+          sendToAllWindows('execution:progress', {
+            executionId: input.executionId,
+            completed: execution.completedTasks,
+            total: execution.totalTasks,
+            percent,
+          })
+        }
+
         return { ok: true, data: undefined }
       } catch (error) {
         return { ok: false, error: serializeError(error) }

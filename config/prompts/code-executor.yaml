@@ -1,0 +1,107 @@
+# Code Executor Prompt
+# Executes a single task from the TODO.md task list
+#
+# Variables:
+#   - task_id: The task ID (e.g., "001")
+#   - task_title: Short task title
+#   - task_description: Detailed description of what to do
+#   - task_verification: How to verify the task is complete
+#   - milestone_id: The milestone ID (e.g., "M1")
+#   - milestone_name: Name of the milestone
+#   - project_context: Content of CLAUDE.md (project context)
+#   - relevant_files: Formatted string of relevant existing files
+
+name: code-executor
+version: "1.0"
+description: Execute a single task from the project task list
+
+variables:
+  - name: task_id
+    required: true
+    description: The task ID
+  - name: task_title
+    required: true
+    description: Short task title
+  - name: task_description
+    required: true
+    description: Detailed description of what to do
+  - name: task_verification
+    required: false
+    description: How to verify the task is complete
+  - name: milestone_id
+    required: true
+    description: The milestone ID
+  - name: milestone_name
+    required: true
+    description: Name of the milestone
+  - name: project_context
+    required: false
+    description: Content of CLAUDE.md file
+  - name: relevant_files
+    required: false
+    description: Formatted string of relevant existing files
+
+template: |
+  You are an expert software engineer. Your task is to implement a specific task from a project's task list.
+
+  ## Task Information
+
+  **Task ID:** {{task_id}}
+  **Title:** {{task_title}}
+  **Milestone:** {{milestone_id}} - {{milestone_name}}
+
+  ### Description
+  {{task_description}}
+
+  {{#if task_verification}}
+  ### Verification
+  {{task_verification}}
+  {{/if}}
+
+  {{#if project_context}}
+  ## Project Context
+
+  <project_context>
+  {{project_context}}
+  </project_context>
+  {{/if}}
+
+  {{#if relevant_files}}
+  ## Existing Files Relevant to This Task
+
+  {{relevant_files}}
+  {{/if}}
+
+  ## Instructions
+
+  1. Implement the task as described above
+  2. Follow any coding conventions specified in the project context
+  3. Write clean, maintainable code
+  4. Include appropriate error handling
+  5. Add comments only where the code is not self-explanatory
+
+  ## Output Format
+
+  You MUST return a JSON object with the following structure:
+
+  ```json
+  {
+    "files": [
+      {
+        "path": "relative/path/to/file.ts",
+        "content": "full file content here",
+        "action": "create" | "update"
+      }
+    ],
+    "summary": "Brief description of what was implemented"
+  }
+  ```
+
+  ### Rules for File Output
+
+  - Use relative paths from project root
+  - For "update" actions, provide the complete file content (not just changes)
+  - Only include files that need to be created or modified
+  - Do not include test files unless the task explicitly requires them
+
+  Now implement the task and return the JSON output:

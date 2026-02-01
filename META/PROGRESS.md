@@ -1015,3 +1015,69 @@ All 4 phases of M6 Code Execution implementation complete:
 - Phase D: Verification and test updates
 
 ---
+
+## 2026-01-31 - M6: Code Execution - Bug Fixes Complete
+
+### Summary
+Fixed critical bugs identified in code review of M6 implementation.
+
+### Issues Fixed
+
+#### Blocker Fixes
+1. **Event name mismatch** (`start-execution.ts`)
+   - Changed `'START'` to `'START_EXECUTION'` to match dev-flow.yaml state machine
+
+2. **Skip marker recognition** (`todo-parser.ts`)
+   - Added `skipped: boolean` to `TodoIndexTask` interface
+   - Updated regex to recognize `[~]` markers for skipped tasks
+   - Updated `buildExecutionPlan` to set `status: 'skipped'`
+
+3. **Resume orchestrator restart** (`execution.ipc.ts`)
+   - Added `runningExecutions` Set to track running loops
+   - On resume, if loop not running (e.g., after app restart), restart it
+
+#### Major Fixes
+4. **Blocked event task IDs** (`execution-orchestrator.ts`)
+   - Was emitting `blockedBy` (dependency IDs), not blocked task IDs
+   - Now calls `getBlockedTasks(plan)` and emits actual blocked task IDs
+
+5. **Skip progress event** (`execution.ipc.ts`)
+   - Skip handler now emits `execution:task:done` and `execution:progress` events
+   - Frontend now updates immediately after skip
+
+6. **Execution config wiring** (`execution.ipc.ts`)
+   - Imported `loadExecutionConfig()` from config-loader
+   - Pass `taskTimeout` and `maxRetries` from config to `runExecutionLoop`
+
+7. **Retry DB UNIQUE constraint** (`execution-orchestrator.ts`)
+   - Was always using `attemptNumber: 1`
+   - Now queries existing attempts and increments: `existingAttempts.length + 1`
+
+8. **State machine on pause/resume/complete**
+   - `pause-execution.ts`: Added `PAUSE` event transition via state machine
+   - `resume-execution.ts`: Added `RESUME` event transition via state machine
+   - `execution-orchestrator.ts`: Added `pauseOnTaskError()` helper with `TASK_ERROR` event
+   - Completion uses `ALL_COMPLETE` event instead of direct status update
+
+9. **Relevant files context** (`execution-orchestrator.ts`, `code-executor.yaml`)
+   - Created `code-executor.yaml` prompt template
+   - Added `extractFilePaths()` to find file paths in task description
+   - Added `gatherRelevantFiles()` to load referenced files + common configs
+   - Files formatted and included in prompt for context
+
+### Files Created
+- `config/prompts/code-executor.yaml` - Code execution prompt template
+
+### Files Modified
+- `src/main/application/use-cases/execution/start-execution.ts`
+- `src/main/application/use-cases/execution/pause-execution.ts`
+- `src/main/application/use-cases/execution/resume-execution.ts`
+- `src/main/domain/engines/todo-parser.ts`
+- `src/main/infrastructure/ipc/execution.ipc.ts`
+- `src/main/application/services/execution-orchestrator.ts`
+
+### Verification
+- TypeCheck: Pass
+- Lint: 0 errors, 10 warnings (pre-existing)
+
+---

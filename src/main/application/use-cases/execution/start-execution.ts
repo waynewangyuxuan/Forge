@@ -170,7 +170,7 @@ export async function startExecution(
   })
 
   // Transition version to 'executing' state
-  const executingState = stateMachine.transition(version.devStatus, 'START')
+  const executingState = stateMachine.transition(version.devStatus, 'START_EXECUTION')
   await versionRepo.updateStatus(input.versionId, { devStatus: executingState })
 
   return execution

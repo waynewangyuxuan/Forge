@@ -15,6 +15,7 @@ export interface TodoIndexTask {
   id: string
   title: string
   completed: boolean
+  skipped: boolean
   milestoneId: string
 }
 
@@ -107,14 +108,17 @@ export function parseTodoIndex(content: string): TodoIndex {
       continue
     }
 
-    // Match task line: - [ ] 001. Task title or - [x] 002. Done task
-    const taskMatch = trimmed.match(/^-\s*\[([ xX])\]\s*(\d+)\.\s*(.+)$/)
+    // Match task line: - [ ] 001. Task title or - [x] 002. Done task or - [~] 003. Skipped task
+    const taskMatch = trimmed.match(/^-\s*\[([ xX~])\]\s*(\d+)\.\s*(.+)$/)
     if (taskMatch && currentMilestone) {
-      const completed = taskMatch[1].toLowerCase() === 'x'
+      const marker = taskMatch[1].toLowerCase()
+      const completed = marker === 'x'
+      const skipped = marker === '~'
       currentMilestone.tasks.push({
         id: taskMatch[2],
         title: taskMatch[3].trim(),
         completed,
+        skipped,
         milestoneId: currentMilestone.id,
       })
     }
@@ -298,7 +302,13 @@ export function buildExecutionPlan(
 
     for (const indexTask of indexMilestone.tasks) {
       const taskDetail = taskDetailMap.get(indexTask.id)
-      const status: TaskStatus = indexTask.completed ? 'completed' : 'pending'
+      // Determine status: skipped > completed > pending
+      let status: TaskStatus = 'pending'
+      if (indexTask.skipped) {
+        status = 'skipped'
+      } else if (indexTask.completed) {
+        status = 'completed'
+      }
 
       tasks.push({
         id: indexTask.id,
@@ -311,7 +321,8 @@ export function buildExecutionPlan(
       })
 
       totalTasks++
-      if (indexTask.completed) {
+      // Count completed and skipped as "done" for progress
+      if (indexTask.completed || indexTask.skipped) {
         completedTasks++
         milestoneCompleted++
       }

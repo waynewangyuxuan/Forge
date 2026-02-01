@@ -32,6 +32,7 @@ import {
 import {
   getNextTask,
   getProgress,
+  getBlockedTasks,
   NextTaskResult,
 } from '../../domain'
 import {
@@ -40,9 +41,9 @@ import {
   writeTaskOutput,
   atomicUpdateTodoStatus,
 } from '../../domain'
-import { parseExecutionPlan } from '../../domain'
+import { parseExecutionPlan, createStateMachine } from '../../domain'
 import { renderPrompt } from '../../domain'
-import { loadPromptConfig } from '../../infrastructure/config-loader'
+import { loadPromptConfig, loadDevFlowStateMachine } from '../../infrastructure/config-loader'
 import { nowISO } from '../../infrastructure/repositories/base.repo'
 
 /**
@@ -117,6 +118,80 @@ async function loadPlan(
 }
 
 /**
+ * Extract file paths mentioned in text (e.g., src/foo/bar.ts)
+ */
+function extractFilePaths(text: string): string[] {
+  // Match common file path patterns
+  const patterns = [
+    // Paths with extensions: src/foo/bar.ts, ./components/Button.tsx
+    /(?:^|[\s`'"(])([./]?(?:[\w-]+\/)*[\w-]+\.[a-zA-Z]{1,5})(?:[\s`'")\]:]|$)/g,
+  ]
+
+  const paths = new Set<string>()
+  for (const pattern of patterns) {
+    let match
+    while ((match = pattern.exec(text)) !== null) {
+      const filePath = match[1]
+      // Filter out common non-file patterns
+      if (
+        !filePath.startsWith('http') &&
+        !filePath.includes('...') &&
+        !filePath.match(/^\d+\.\d+/) // version numbers like 1.0
+      ) {
+        // Normalize path (remove leading ./)
+        paths.add(filePath.replace(/^\.\//, ''))
+      }
+    }
+  }
+
+  return Array.from(paths)
+}
+
+/**
+ * Gather relevant files for a task
+ * Sources:
+ * 1. Files explicitly mentioned in task description
+ * 2. Common config files (package.json, tsconfig.json)
+ */
+async function gatherRelevantFiles(
+  task: Task,
+  projectPath: string,
+  fs: IFileSystemAdapter,
+  maxFiles: number = 5,
+  maxFileSize: number = 10000 // 10KB per file
+): Promise<Array<{ path: string; content: string }>> {
+  const files: Array<{ path: string; content: string }> = []
+
+  // Extract file paths from task description
+  const mentionedPaths = extractFilePaths(task.description || '')
+
+  // Add common config files that are often relevant
+  const commonConfigs = ['package.json', 'tsconfig.json']
+
+  // Combine and deduplicate
+  const pathsToCheck = [...new Set([...mentionedPaths, ...commonConfigs])]
+
+  for (const relativePath of pathsToCheck) {
+    if (files.length >= maxFiles) break
+
+    const fullPath = path.join(projectPath, relativePath)
+    try {
+      if (await fs.exists(fullPath)) {
+        const content = await fs.readFile(fullPath)
+        // Skip files that are too large
+        if (content.length <= maxFileSize) {
+          files.push({ path: relativePath, content })
+        }
+      }
+    } catch {
+      // Skip files that can't be read
+    }
+  }
+
+  return files
+}
+
+/**
  * Build prompt for executing a task
  */
 async function buildTaskPrompt(
@@ -135,6 +210,14 @@ async function buildTaskPrompt(
     projectContext = await fs.readFile(claudeMdPath)
   }
 
+  // Gather relevant files for this task
+  const relevantFiles = await gatherRelevantFiles(task, projectPath, fs)
+
+  // Format relevant files as a string for the template
+  const relevantFilesStr = relevantFiles
+    .map((f) => `### ${f.path}\n\`\`\`\n${f.content}\n\`\`\``)
+    .join('\n\n')
+
   // Render prompt with variables
   return renderPrompt(promptConfig.template, {
     task_id: task.id,
@@ -144,7 +227,7 @@ async function buildTaskPrompt(
     milestone_id: milestone.id,
     milestone_name: milestone.name,
     project_context: projectContext,
-    relevant_files: '', // TODO: Add relevant files based on task context
+    relevant_files: relevantFilesStr,
   })
 }
 
@@ -199,6 +282,18 @@ export async function runExecutionLoop(
 
   const todoPath = path.join(project.path, 'META', 'TODO.md')
 
+  // Helper to pause execution due to task error with state machine transition
+  async function pauseOnTaskError(): Promise<void> {
+    const currentVersion = await versionRepo.findById(execution.versionId)
+    if (currentVersion && currentVersion.devStatus === 'executing') {
+      const stateMachineConfig = loadDevFlowStateMachine()
+      const stateMachine = createStateMachine(stateMachineConfig)
+      const pausedState = stateMachine.transition(currentVersion.devStatus, 'TASK_ERROR')
+      await versionRepo.updateStatus(currentVersion.id, { devStatus: pausedState })
+    }
+    await executionRepo.setPaused(execution.id, true)
+  }
+
   // Main execution loop
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -243,29 +338,40 @@ export async function runExecutionLoop(
     const nextResult: NextTaskResult = getNextTask(plan)
 
     if (nextResult.reason === 'all_completed') {
-      // All tasks done
+      // All tasks done - transition via state machine
+      const stateMachineConfig = loadDevFlowStateMachine()
+      const stateMachine = createStateMachine(stateMachineConfig)
+      const completedState = stateMachine.transition(version.devStatus, 'ALL_COMPLETE')
+
       await executionRepo.complete(execution.id, 'completed')
-      await versionRepo.updateStatus(execution.versionId, { devStatus: 'completed' })
+      await versionRepo.updateStatus(execution.versionId, { devStatus: completedState })
       events.emitCompleted({ executionId: execution.id })
       return
     }
 
     if (nextResult.reason === 'blocked') {
-      // All pending tasks are blocked
+      // All pending tasks are blocked - get the blocked task IDs (not the blockedBy dependencies)
+      const blockedTasks = getBlockedTasks(plan)
+      const blockedTaskIds = blockedTasks.map((bt) => bt.task.id)
+
       events.emitBlocked({
         executionId: execution.id,
-        blockedTaskIds: nextResult.blockedBy || [],
+        blockedTaskIds,
       })
 
-      // Pause and wait for user to skip blocked tasks
-      await executionRepo.setPaused(execution.id, true)
+      // Pause and wait for user to skip blocked tasks - use TASK_ERROR to transition
+      await pauseOnTaskError()
       continue // Will check isPaused at top of loop
     }
 
     if (nextResult.reason === 'no_pending' || !nextResult.task || !nextResult.milestone) {
-      // No more tasks
+      // No more tasks - transition via state machine
+      const stateMachineConfig = loadDevFlowStateMachine()
+      const stateMachine = createStateMachine(stateMachineConfig)
+      const completedState = stateMachine.transition(version.devStatus, 'ALL_COMPLETE')
+
       await executionRepo.complete(execution.id, 'completed')
-      await versionRepo.updateStatus(execution.versionId, { devStatus: 'completed' })
+      await versionRepo.updateStatus(execution.versionId, { devStatus: completedState })
       events.emitCompleted({ executionId: execution.id })
       return
     }
@@ -287,11 +393,14 @@ export async function runExecutionLoop(
       description: task.title,
     })
 
-    // Create task attempt record
+    // Create task attempt record with correct attempt number
+    const existingAttempts = await taskAttemptRepo.findByTask(execution.id, task.id)
+    const attemptNumber = existingAttempts.length + 1
+
     const attempt = await taskAttemptRepo.create({
       executionId: execution.id,
       taskId: task.id,
-      attemptNumber: 1, // TODO: Track retries
+      attemptNumber,
       startedAt: nowISO(),
       completedAt: null,
       status: 'running',
@@ -305,7 +414,7 @@ export async function runExecutionLoop(
     } catch (error) {
       const errorMsg = `Failed to build prompt: ${error instanceof Error ? error.message : String(error)}`
       await taskAttemptRepo.complete(attempt.id, 'failed', errorMsg)
-      await executionRepo.setPaused(execution.id, true)
+      await pauseOnTaskError()
       events.emitTaskFailed({
         executionId: execution.id,
         taskId: task.id,
@@ -327,7 +436,7 @@ export async function runExecutionLoop(
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error)
       await taskAttemptRepo.complete(attempt.id, 'failed', errorMsg)
-      await executionRepo.setPaused(execution.id, true)
+      await pauseOnTaskError()
       events.emitTaskFailed({
         executionId: execution.id,
         taskId: task.id,
@@ -338,7 +447,7 @@ export async function runExecutionLoop(
 
     if (!result.success) {
       await taskAttemptRepo.complete(attempt.id, 'failed', result.error || 'Claude execution failed')
-      await executionRepo.setPaused(execution.id, true)
+      await pauseOnTaskError()
       events.emitTaskFailed({
         executionId: execution.id,
         taskId: task.id,
@@ -352,7 +461,7 @@ export async function runExecutionLoop(
     if (!taskOutput) {
       const errorMsg = 'Failed to parse structured output from Claude'
       await taskAttemptRepo.complete(attempt.id, 'failed', errorMsg)
-      await executionRepo.setPaused(execution.id, true)
+      await pauseOnTaskError()
       events.emitTaskFailed({
         executionId: execution.id,
         taskId: task.id,
@@ -366,7 +475,7 @@ export async function runExecutionLoop(
     if (!validation.valid) {
       const errorMsg = `Invalid task output: ${validation.errors.join(', ')}`
       await taskAttemptRepo.complete(attempt.id, 'failed', errorMsg)
-      await executionRepo.setPaused(execution.id, true)
+      await pauseOnTaskError()
       events.emitTaskFailed({
         executionId: execution.id,
         taskId: task.id,
@@ -380,7 +489,7 @@ export async function runExecutionLoop(
     if (!writeResult.success) {
       const errorMsg = `Failed to write files: ${writeResult.errors.map((e: { path: string; error: string }) => `${e.path}: ${e.error}`).join(', ')}`
       await taskAttemptRepo.complete(attempt.id, 'failed', errorMsg)
-      await executionRepo.setPaused(execution.id, true)
+      await pauseOnTaskError()
       events.emitTaskFailed({
         executionId: execution.id,
         taskId: task.id,
