@@ -11,6 +11,7 @@ import { ReviewApproveInput } from '@shared/types/ipc.types'
 import { createStateMachine } from '../../../domain/engines/state-machine'
 import { loadDevFlowStateMachine } from '../../../infrastructure/config-loader'
 import { parseTodoIndex } from '../../../domain/engines/todo-parser'
+import type { Version } from '@shared/types/project.types'
 
 export interface ApproveReviewDeps {
   projectRepo: IProjectRepository
@@ -23,11 +24,12 @@ export interface ApproveReviewDeps {
  *
  * @param input - versionId
  * @param deps - repository dependencies
+ * @returns The updated Version with new devStatus
  */
 export async function approveReview(
   input: ReviewApproveInput,
   deps: ApproveReviewDeps
-): Promise<void> {
+): Promise<Version> {
   const { projectRepo, versionRepo, fs } = deps
 
   // Validate input
@@ -77,4 +79,11 @@ export async function approveReview(
   // APPROVE: reviewing → ready
   const readyState = stateMachine.transition(version.devStatus, 'APPROVE')
   await versionRepo.updateStatus(input.versionId, { devStatus: readyState })
+
+  // Return updated version
+  const updatedVersion = await versionRepo.findById(input.versionId)
+  if (!updatedVersion) {
+    throw new NotFoundError('Version', input.versionId)
+  }
+  return updatedVersion
 }

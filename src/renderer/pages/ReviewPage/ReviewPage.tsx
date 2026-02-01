@@ -18,6 +18,7 @@ import { ReviewLayout, ReviewHeader, ReviewBanner } from '../../components/revie
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
 import type { IPCResult } from '@shared/types/ipc.types'
 import type { ExecutionPlan, Feedback } from '@shared/types/execution.types'
+import type { Version } from '@shared/types/project.types'
 
 type ViewTab = 'tasks' | 'raw'
 
@@ -31,6 +32,7 @@ export const ReviewPage: React.FC = () => {
   const navigate = useNavigate()
   const versions = useVersions(projectId)
   const currentVersionId = useServerStore((s) => (projectId ? s.currentVersionId[projectId] : undefined))
+  const updateVersion = useServerStore((s) => s.updateVersion)
 
   const currentVersion = versions.find((v) => v.id === currentVersionId) ?? versions[0]
 
@@ -323,9 +325,11 @@ export const ReviewPage: React.FC = () => {
     try {
       const result = await window.api.invoke('review:approve', {
         versionId: currentVersionId,
-      }) as IPCResult<void>
+      }) as IPCResult<Version>
 
       if (result.ok) {
+        // Update version in store with new devStatus
+        updateVersion(result.data)
         // Navigate to execute page
         navigate(`/projects/${projectId}/execute`)
       } else {

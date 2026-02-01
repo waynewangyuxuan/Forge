@@ -486,7 +486,7 @@ export interface IPCChannelMap {
   'review:addFeedback': { input: ReviewAddFeedbackInput; output: IPCResult<Feedback> }
   'review:clearFeedback': { input: ReviewClearFeedbackInput; output: IPCResult<void> }
   'review:regenerate': { input: ReviewRegenerateInput; output: IPCResult<void> }
-  'review:approve': { input: ReviewApproveInput; output: IPCResult<void> }
+  'review:approve': { input: ReviewApproveInput; output: IPCResult<Version> }
 
   // Execution - all return IPCResult<T>
   'execution:start': { input: ExecutionStartInput; output: IPCResult<Execution> }

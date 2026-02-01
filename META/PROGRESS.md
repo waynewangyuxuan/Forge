@@ -1081,3 +1081,33 @@ Fixed critical bugs identified in code review of M6 implementation.
 - Lint: 0 errors, 10 warnings (pre-existing)
 
 ---
+
+## 2026-02-01 - M6: State Synchronization Fix
+
+### Summary
+Fixed state synchronization issue where frontend store wasn't updated after approve action, causing stale `devStatus` to be displayed.
+
+### Problem
+After approving TODO on Review page:
+1. Backend correctly changed `devStatus` from 'reviewing' → 'ready' in database
+2. Frontend store still held stale version data with old `devStatus`
+3. Both Review and Execute pages showed conflicting status messages
+
+### Solution
+- Modified `approveReview` use case to return the updated `Version` object
+- Updated IPC handler and types to return `Version` instead of `void`
+- Added `updateVersion()` method to `server.store.ts` for updating single version in state
+- Updated `ReviewPage` to call `updateVersion()` after successful approve
+
+### Files Modified
+- `src/main/application/use-cases/review/approve-review.ts` - Returns updated Version
+- `src/main/infrastructure/ipc/review.ipc.ts` - Returns Version from handler
+- `src/shared/types/ipc.types.ts` - Updated channel return type
+- `src/renderer/stores/server.store.ts` - Added updateVersion method
+- `src/renderer/pages/ReviewPage/ReviewPage.tsx` - Calls updateVersion after approve
+- `scripts/ensure-native-modules.mjs` - Improved binding file existence check
+
+### Verification
+- TypeCheck: Pass
+
+---

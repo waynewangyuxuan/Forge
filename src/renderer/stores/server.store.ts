@@ -62,6 +62,7 @@ interface ServerStore {
   fetchVersions: (projectId: string) => Promise<void>  // Pattern A
   createVersion: (input: CreateVersionInput) => Promise<IPCResult<Version>>  // Pattern B
   setCurrentVersion: (projectId: string, versionId: string) => void
+  updateVersion: (version: Version) => void  // Update a single version in state
 
   // ========== Credentials Actions ==========
 
@@ -220,6 +221,20 @@ export const useServerStore = create<ServerStore>((set) => ({
     invokeTyped('version:setActive', { id: versionId }).then((result) => {
       if (!result.ok) {
         console.error('Failed to set active version:', result.error.message)
+      }
+    })
+  },
+
+  updateVersion: (version: Version) => {
+    set((s) => {
+      const projectVersions = s.versions[version.projectId] || []
+      return {
+        versions: {
+          ...s.versions,
+          [version.projectId]: projectVersions.map((v) =>
+            v.id === version.id ? version : v
+          ),
+        },
       }
     })
   },

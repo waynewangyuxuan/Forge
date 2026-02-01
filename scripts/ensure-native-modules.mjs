@@ -17,6 +17,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 const CACHE_FILE = join(ROOT, 'node_modules', '.native-build-target')
 const SQLITE_DIR = join(ROOT, 'node_modules', 'better-sqlite3')
+const BINDING_FILE = join(SQLITE_DIR, 'build', 'Release', 'better_sqlite3.node')
 
 // Timeout for rebuild (30 seconds)
 const REBUILD_TIMEOUT_MS = 30_000
@@ -54,9 +55,13 @@ if (existsSync(CACHE_FILE)) {
   }
 }
 
-if (cachedTarget === targetKey) {
-  // Already built for this target and version, skip rebuild
+if (cachedTarget === targetKey && existsSync(BINDING_FILE)) {
+  // Already built for this target and version, and binding exists, skip rebuild
   process.exit(0)
+}
+
+if (cachedTarget === targetKey && !existsSync(BINDING_FILE)) {
+  console.warn('Native binding missing despite matching cache. Rebuilding...')
 }
 
 console.log(`Rebuilding native modules for ${target}...`)

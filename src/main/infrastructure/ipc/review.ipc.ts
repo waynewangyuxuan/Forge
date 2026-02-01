@@ -37,6 +37,7 @@ import type {
   ScaffoldErrorEvent,
 } from '@shared/types/ipc.types'
 import type { ExecutionPlan, Feedback } from '@shared/types/execution.types'
+import type { Version } from '@shared/types/project.types'
 
 // Initialize dependencies
 const projectRepo = new SQLiteProjectRepository()
@@ -190,10 +191,10 @@ export function registerReviewHandlers(): void {
   // review:approve - Approve review and transition to ready state
   ipcMain.handle(
     'review:approve',
-    async (_event, input: ReviewApproveInput): Promise<IPCResult<void>> => {
+    async (_event, input: ReviewApproveInput): Promise<IPCResult<Version>> => {
       try {
-        await approveReview(input, { projectRepo, versionRepo, fs })
-        return { ok: true, data: undefined }
+        const version = await approveReview(input, { projectRepo, versionRepo, fs })
+        return { ok: true, data: version }
       } catch (error) {
         return { ok: false, error: serializeError(error) }
       }
