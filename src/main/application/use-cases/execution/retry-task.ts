@@ -3,12 +3,15 @@
  * Retries a failed task in a paused execution
  */
 
-import { IExecutionRepository } from '@shared/interfaces/repositories'
+import { IExecutionRepository, IVersionRepository } from '@shared/interfaces/repositories'
 import { ValidationError, NotFoundError } from '@shared/errors'
 import { ExecutionRetryInput } from '@shared/types/ipc.types'
+import { createStateMachine } from '../../../domain'
+import { loadDevFlowStateMachine } from '../../../infrastructure/config-loader'
 
 export interface RetryTaskDeps {
   executionRepo: IExecutionRepository
+  versionRepo: IVersionRepository
 }
 
 /**
@@ -24,7 +27,7 @@ export async function retryTask(
   input: ExecutionRetryInput,
   deps: RetryTaskDeps
 ): Promise<void> {
-  const { executionRepo } = deps
+  const { executionRepo, versionRepo } = deps
 
   // Validate input
   if (!input.executionId || input.executionId.trim() === '') {
@@ -48,6 +51,18 @@ export async function retryTask(
       'status'
     )
   }
+
+  // Get version to update devStatus via state machine
+  const version = await versionRepo.findById(execution.versionId)
+  if (!version) {
+    throw new NotFoundError('Version', execution.versionId)
+  }
+
+  // Transition version to executing state via state machine (RETRY from paused)
+  const stateMachineConfig = loadDevFlowStateMachine()
+  const stateMachine = createStateMachine(stateMachineConfig)
+  const executingState = stateMachine.transition(version.devStatus, 'RETRY')
+  await versionRepo.updateStatus(version.id, { devStatus: executingState })
 
   // Clear paused state - orchestrator will pick up and retry the current task
   await executionRepo.setPaused(input.executionId, false)

@@ -8,7 +8,8 @@ import { IProjectRepository, IVersionRepository, IExecutionRepository } from '@s
 import { IFileSystemAdapter } from '@shared/interfaces/adapters'
 import { ValidationError, NotFoundError } from '@shared/errors'
 import { ExecutionSkipInput } from '@shared/types/ipc.types'
-import { atomicUpdateTodoStatus } from '../../../domain'
+import { atomicUpdateTodoStatus, createStateMachine } from '../../../domain'
+import { loadDevFlowStateMachine } from '../../../infrastructure/config-loader'
 
 export interface SkipTaskDeps {
   projectRepo: IProjectRepository
@@ -75,6 +76,12 @@ export async function skipTask(
     completedTasks: execution.completedTasks + 1,
     currentTaskId: null,
   })
+
+  // Transition version to executing state via state machine (RESUME from paused)
+  const stateMachineConfig = loadDevFlowStateMachine()
+  const stateMachine = createStateMachine(stateMachineConfig)
+  const executingState = stateMachine.transition(version.devStatus, 'RESUME')
+  await versionRepo.updateStatus(version.id, { devStatus: executingState })
 
   // Clear paused state - orchestrator will move to next task
   await executionRepo.setPaused(input.executionId, false)

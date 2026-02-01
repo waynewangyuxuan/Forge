@@ -218,7 +218,7 @@ export function registerExecutionHandlers(): void {
     'execution:retry',
     async (_event, input): Promise<IPCResult<void>> => {
       try {
-        await retryTask(input, { executionRepo })
+        await retryTask(input, { executionRepo, versionRepo })
         return { ok: true, data: undefined }
       } catch (error) {
         return { ok: false, error: serializeError(error) }
